@@ -21,7 +21,7 @@ def get_column_names():
 @app.get("/variables")
 def variavles():
     # Leer el archivo CSV
-    return {"variables": get_column_names()}
+    return {"data": get_column_names()}
 # def get_variables(columns: str = None):
 #     try:
 #         # Leer el archivo CSV
