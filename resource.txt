@@ -1,0 +1,16 @@
+https://docs.python.org/es/3/tutorial/venv.html
+
+CREAR ENTORNO VIRTUAL
+python3 -m venv fastapi-env
+
+ACTIVAR ENTORN VIRTUAL
+source fastapi-env/bin/activate
+
+https://www.youtube.com/watch?v=J0y2tjBz2Ao
+
+pip install fastapi pandas uvicorn
+
+# LEVANTAR EL SERVIDOR
+uvicorn main:app --reload
+
+
