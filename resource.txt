@@ -11,6 +11,6 @@ https://www.youtube.com/watch?v=J0y2tjBz2Ao
 pip install fastapi pandas uvicorn
 
 # LEVANTAR EL SERVIDOR
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8082
 
 

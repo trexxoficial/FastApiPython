@@ -17,7 +17,11 @@ def get_column_names():
     return resumen
 
 
-# Endpoint para leer el CSV y extraer variables
+@app.get("/")
+def root():
+    return {"message": "API de FastAPI desplegada en Railway. Visita /variables para ver los datos."}
+
+
 @app.get("/variables")
 def variavles():
     # Leer el archivo CSV
