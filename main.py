@@ -16,6 +16,7 @@ def get_column_names():
     }
     return resumen
 
+
 # Endpoint para leer el CSV y extraer variables
 @app.get("/variables")
 def variavles():
