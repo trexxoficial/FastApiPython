@@ -16,24 +16,13 @@ def root():
 @app.get("/variables")
 async def variables():
     try:
-        async with httpx.AsyncClient(timeout=100.0) as client:
-            resp = await client.get(CSV_FILE_PATH)
-            if resp.status_code != 200:
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Error al descargar CSV. Código HTTP: {resp.status_code}"
-                )
-
-            df = pd.read_csv(StringIO(resp.text), sep=";")
-            resumen = {
-                "filas": df.shape[0],
-                "columnas": df.shape[1],
-                "columnas_info": df.dtypes.astype(str).to_dict(),
-            }
-            return {"data": resumen}
-
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Error descargando CSV: {e}")
+        df = pd.read_csv(CSV_FILE_PATH, sep=";")
+        resumen = {
+            "filas": df.shape[0],
+            "columnas": df.shape[1],
+            "columnas_info": df.dtypes.astype(str).to_dict(),
+        }
+        return {"data": resumen}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
