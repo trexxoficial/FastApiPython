@@ -10,7 +10,7 @@ CSV_FILE_PATH = "https://firebasestorage.googleapis.com/v0/b/davgui24-6182c.fire
 @app.get("/")
 def root():
     return {
-        "message": "API en Render OK. en V 3 .Usa /variables para consultar datos del CSV remoto."
+        "message": "API en Render OK. en V4 .Usa /variables para consultar datos del CSV remoto."
     }
 
 @app.get("/variables")
@@ -29,8 +29,10 @@ async def variables():
 
             return {"data": resumen}
     except httpx.HTTPError as e:
+        print(f"Error descargando CSV 1: {e}")
         raise HTTPException(status_code=502, detail=f"Error descargando CSV: {e}")
     except Exception as e:
+        print(f"Error descargando CSV 2: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
