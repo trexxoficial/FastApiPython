@@ -16,7 +16,7 @@ CSV_FILE_PATH = "Violencia_clean.csv"
 @app.get("/")
 def root():
     return {
-        "message": "API en Render OK. en V8 .Usa /variables para consultar datos del CSV remoto."
+        "message": "API en Render OK. en V1 .Usa /variables para consultar datos del CSV remoto."
     }
 
 @app.get("/variables")
