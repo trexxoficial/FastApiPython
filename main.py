@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 import pandas as pd
 import httpx
 from io import StringIO
+import json
 
 app = FastAPI()
 
@@ -10,19 +12,21 @@ CSV_FILE_PATH = "Violencia_clean.csv"
 @app.get("/")
 def root():
     return {
-        "message": "API en Render OK. en V7 .Usa /variables para consultar datos del CSV remoto."
+        "message": "API en Render OK. en V8 .Usa /variables para consultar datos del CSV remoto."
     }
 
 @app.get("/variables")
 async def variables():
     try:
         df = pd.read_csv(CSV_FILE_PATH, sep=";")
-        resumen = {
-            "filas": df.shape[0],
-            "columnas": df.shape[1],
-            "columnas_info": df.dtypes.astype(str).to_dict(),
-        }
-        return {"data": resumen}
+        descripcion = df.describe().to_dict()
+
+        # resumen = {
+        #     "filas": df.shape[0],
+        #     "columnas": df.shape[1],
+        #     "columnas_info": df.dtypes.astype(str).to_dict(),
+        # }
+        return {"data": JSONResponse(content={"describe": descripcion})}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
