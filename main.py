@@ -6,9 +6,9 @@ from fastapi.encoders import jsonable_encoder
 app = FastAPI()
 
 CSV_FILE_PATH = "https://firebasestorage.googleapis.com/v0/b/davgui24-6182c.firebasestorage.app/o/analisis_de_datos%2FViolencia_clean.csv?alt=media&token=664ebff8-6ba3-403d-92f0-16ee795ab344"
-
+df = pd.read_csv(CSV_FILE_PATH, sep=";") 
 def get_column_names():
-    df = pd.read_csv(CSV_FILE_PATH, sep=";")  # usa sep=";" si tu CSV usa punto y coma
+    
     resumen = {
         "filas": df.shape[0],
         "columnas": df.shape[1],
