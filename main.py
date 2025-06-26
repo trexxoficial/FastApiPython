@@ -19,7 +19,7 @@ def get_column_names():
 
 @app.get("/")
 def root():
-    return {"message": "API de FastAPI desplegada en Railway. Visita /variables para ver los datos."}
+    return {"message": "API de FastAPI desplegada en Render API. Visita /variables para ver los datos."}
 
 
 @app.get("/variables")
