@@ -2,17 +2,25 @@ from fastapi import FastAPI, HTTPException, Response
 import pandas as pd
 import io
 from fastapi.encoders import jsonable_encoder
+import httpx
+from io import StringIO
 
 app = FastAPI()
 
 CSV_FILE_PATH = "https://firebasestorage.googleapis.com/v0/b/davgui24-6182c.firebasestorage.app/o/analisis_de_datos%2FViolencia_clean.csv?alt=media&token=664ebff8-6ba3-403d-92f0-16ee795ab344"
-df = pd.read_csv(CSV_FILE_PATH, sep=";") 
+
+async def cargar_csv_async():
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(CSV_FILE_PATH)
+        df = pd.read_csv(StringIO(resp.text), sep=";")
+        return df
+# df = pd.read_csv(CSV_FILE_PATH, sep=";") 
 def get_column_names():
     
     resumen = {
-        "filas": df.shape[0],
-        "columnas": df.shape[1],
-        "columnas_info": df.dtypes.astype(str).to_dict(),
+        "filas": cargar_csv_async().shape[0],
+        "columnas": cargar_csv_async().shape[1],
+        "columnas_info": cargar_csv_async().dtypes.astype(str).to_dict(),
     }
     return resumen
 
