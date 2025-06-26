@@ -5,7 +5,7 @@ from io import StringIO
 
 app = FastAPI()
 
-CSV_FILE_PATH = "https://firebasestorage.googleapis.com/v0/b/davgui24-6182c.firebasestorage.app/o/analisis_de_datos%2FViolencia_clean.csv?alt=media&token=664ebff8-6ba3-403d-92f0-16ee795ab344"
+CSV_FILE_PATH = "Violencia_clean.csv"
 
 @app.get("/")
 def root():
