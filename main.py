@@ -23,7 +23,7 @@ def root():
 
 
 @app.get("/variables")
-def variavles():
+def variables():
     # Leer el archivo CSV
     return {"data": get_column_names()}
 # def get_variables(columns: str = None):
