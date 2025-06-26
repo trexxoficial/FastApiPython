@@ -1,9 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-import pandas as pd
+from fastapi.responses import FileResponse
 import httpx
 from io import StringIO
 import json
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 app = FastAPI()
 
@@ -19,14 +23,24 @@ def root():
 async def variables():
     try:
         df = pd.read_csv(CSV_FILE_PATH, sep=";")
-        descripcion = df.describe().to_dict()
+        # descripcion = df.describe().to_dict()
 
         # resumen = {
         #     "filas": df.shape[0],
         #     "columnas": df.shape[1],
         #     "columnas_info": df.dtypes.astype(str).to_dict(),
         # }
-        return {"data": JSONResponse(content={"describe": descripcion})}
+
+
+        # Histogramas de Frecuencia
+        plt.figure()
+        plt.hist(df["Escolaridad"], bins=10)
+        ruta = "histograma.png"
+        plt.savefig(ruta)
+        plt.close()
+        return {
+            "histograma": FileResponse(ruta, media_type="image/png")
+            }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
