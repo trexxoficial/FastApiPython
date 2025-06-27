@@ -47,7 +47,7 @@ async def variables():
         return FileResponse(path=ruta, media_type="image/png", filename="grafico_barras.png")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 
