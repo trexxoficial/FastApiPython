@@ -40,7 +40,7 @@ async def variables():
         plt.xticks(rotation=75)
         plt.tight_layout()
 
-        ruta = "grafico_barras.png"
+        ruta = "graficos/grafico_barras.png"
         plt.savefig(ruta)
         plt.close()
 
