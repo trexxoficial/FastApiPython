@@ -29,7 +29,6 @@ async def variables():
         #     "columnas_info": df.dtypes.astype(str).to_dict(),
         # }
 
-
         # Gráfico de barras
         plt.figure(figsize=(10, 6))
         frec = df["Presunto Agresor"].value_counts()
