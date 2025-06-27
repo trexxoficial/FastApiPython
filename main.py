@@ -44,7 +44,6 @@ async def variables():
         plt.savefig(ruta)
         plt.close()
 
-        
         return FileResponse(path=ruta, media_type="image/png", filename="grafico_barras.png")
 
     except Exception as e:
