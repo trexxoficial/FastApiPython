@@ -1,9 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.responses import FileResponse
-import httpx
-from io import StringIO
-import json
+
 
 import pandas as pd
 import matplotlib.pyplot as plt
