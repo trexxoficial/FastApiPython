@@ -6,7 +6,6 @@ from fastapi.responses import FileResponse
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
 
 app = FastAPI()
 

@@ -3,4 +3,3 @@ uvicorn[standard]
 pandas
 seaborn
 matplotlib
-os
