@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
 app = FastAPI()
 
@@ -30,15 +31,21 @@ async def variables():
         # }
 
 
-        # Histogramas de Frecuencia
+         # Crear histograma
         plt.figure()
-        plt.hist(df["Escolaridad"], bins=10)
+        plt.hist(df["Escolaridad"], bins=10, color='skyblue', edgecolor='black')
+        plt.title("Histograma de Escolaridad")
+        plt.xlabel("Escolaridad")
+        plt.ylabel("Frecuencia")
+
         ruta = "histograma.png"
         plt.savefig(ruta)
         plt.close()
+        
         return {
-            "histograma": FileResponse(ruta, media_type="image/png")
-            }
+            "histograma": FileResponse(path=ruta, media_type="image/png", filename="histograma.png")
+         }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
