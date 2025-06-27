@@ -20,7 +20,7 @@ def root():
 @app.get("/variables")
 async def variables():
     try:
-        df = pd.read_csv(CSV_FILE_PATH, sep=";")
+        df = pd.read_csv(CSV_FILE_PATH, sep=",")
         # descripcion = df.describe().to_dict()
 
         # resumen = {
@@ -30,20 +30,22 @@ async def variables():
         # }
 
 
-         # Crear histograma
-        plt.figure()
-        plt.hist(df["Escolaridad"], bins=10, color='skyblue', edgecolor='black')
-        plt.title("Histograma de Escolaridad")
-        plt.xlabel("Escolaridad")
-        plt.ylabel("Frecuencia")
+        # Gráfico de barras
+        plt.figure(figsize=(10, 6))
+        frec = df["Presunto Agresor"].value_counts()
+        frec.plot(kind="bar", color="skyblue", edgecolor="black")
+        plt.title("Frecuencia de Presuntos Agresores")
+        plt.xlabel("Presunto Agresor")
+        plt.ylabel("Cantidad")
+        plt.xticks(rotation=75)
+        plt.tight_layout()
 
-        ruta = "histograma.png"
+        ruta = "grafico_barras.png"
         plt.savefig(ruta)
         plt.close()
+
         
-        return {
-            "histograma": FileResponse(path=ruta, media_type="image/png", filename="histograma.png")
-         }
+        return FileResponse(path=ruta, media_type="image/png", filename="grafico_barras.png")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
