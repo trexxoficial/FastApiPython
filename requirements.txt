@@ -3,3 +3,8 @@ uvicorn[standard]
 pandas
 seaborn
 matplotlib
+dash
+dash_core_components
+dash_html_components
+plotly
+flask
