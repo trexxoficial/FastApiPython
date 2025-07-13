@@ -16,14 +16,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 app = FastAPI()
-CSV_FILE_PATH = "Violencia_clean.csv"
 
 
 # **********************************
 # ============ CARGAR Y PREPARAR DATOS ================
 # Crear servidor Flask para Dash
 # Leer CSV
-CSV_FILE_PATH = "Violencia_clean.csv"
+CSV_FILE_PATH = "Violencia.csv"
 df = pd.read_csv(CSV_FILE_PATH, sep=",")
 flask_server = Flask(__name__)
 df.columns = df.columns.str.strip()
@@ -81,7 +80,6 @@ dash_app.layout = html.Div([
 @app.get("/graficaPrueba")
 async def variables():
     try:
-        df = pd.read_csv(CSV_FILE_PATH, sep=",")
         # descripcion = df.describe().to_dict()
 
         # resumen = {
