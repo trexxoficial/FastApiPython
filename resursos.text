@@ -1,0 +1,11 @@
+python -m uvicorn main:app --reload
+python -m uvicorn recibo_satisfaccion:app --reload
+
+# Windows:
+python -m venv venv
+
+# Mac/Linux:
+Mac/Linux:
+
+
+uvicorn main:app --reload
