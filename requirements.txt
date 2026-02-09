@@ -1,6 +1,5 @@
 fastapi
 flask
-os
 uvicorn
 ffmpeg-python
 python-multipart
