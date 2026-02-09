@@ -12,6 +12,5 @@ plotly
 matplotlib
 pandas
 seaborn
-
 torch
 demucs
