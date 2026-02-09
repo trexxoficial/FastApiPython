@@ -5,6 +5,9 @@ python-multipart
 docxtpl
 pydantic
 torchaudio
+dash
+plotly
+pandas
 
 torch
 demucs
