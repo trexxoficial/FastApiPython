@@ -3,6 +3,7 @@ import matplotlib
 matplotlib.use('Agg') 
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, StreamingResponse
 from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask 
@@ -19,6 +20,20 @@ import os
 from recibo_satisfaccion import procesar_recibo, DatosContrato
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:4200",    # Puerto por defecto de Angular
+    "http://127.0.0.1:4200",
+    "*"                         # (Opcional) Permite a todo el mundo (útil para desarrollo)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,      # Qué dominios pueden conectarse
+    allow_credentials=True,
+    allow_methods=["*"],        # Permitir todos los métodos (POST, GET, etc.)
+    allow_headers=["*"],        # Permitir todos los headers
+)
 
 # **********************************
 # ============ CARGAR Y PREPARAR DATOS DASH ================
