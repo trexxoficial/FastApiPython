@@ -26,7 +26,6 @@ origins = [
     "http://127.0.0.1:4200",
     "*"                         # (Opcional) Permite a todo el mundo (útil para desarrollo)
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,      # Qué dominios pueden conectarse
