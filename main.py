@@ -14,10 +14,12 @@ from dash import Dash, html, dcc, dash_table
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+from pydantic import BaseModel
+from typing import List, Dict, Any
 
-# IMPORTACIÓN DE TU MÓDULO DE RECIBOS
-# Asegúrate de que recibo_satisfaccion.py esté en la misma carpeta
+# IMPORTACIÓN DE TU MÓDULOS
 from recibo_satisfaccion import procesar_recibo, DatosContrato
+from cv_generator import crear_docx_cv 
 
 app = FastAPI()
 
@@ -169,3 +171,40 @@ async def root():
         </body>
      </html>
      """
+
+
+# Definimos el modelo de datos para validación (opcional pero recomendado)
+class ResumeData(BaseModel):
+    personal: Dict[str, Any]
+    formacion: List[Dict[str, Any]]
+    experiencia: List[Dict[str, Any]]
+    skills: List[str]
+    diplomas: List[str]
+
+@app.post("/generate-cv")
+async def generate_cv_endpoint(data: ResumeData):
+    try:
+        # 1. Convertimos el modelo Pydantic a dict
+        data_dict = data.dict()
+        
+        # 2. Llamamos a tu lógica separada
+        file_stream = crear_docx_cv(data_dict)
+        
+        # 3. Definimos nombre del archivo
+        filename = f"HV_{data_dict['personal'].get('nombre', 'Usuario')}.docx"
+        
+        # 4. Retornamos el stream
+        headers = {
+            'Content-Disposition': f'attachment; filename="{filename}"'
+        }
+        
+        return StreamingResponse(
+            file_stream, 
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers=headers
+        )
+        
+    except Exception as e:
+        # Log del error real para ti
+        print(f"Error generando CV: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

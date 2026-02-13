@@ -4,6 +4,7 @@ uvicorn
 ffmpeg-python
 python-multipart
 docxtpl
+python-docx
 pydantic
 torchaudio
 dash
