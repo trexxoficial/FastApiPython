@@ -1,4 +1,6 @@
 import matplotlib
+
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 # CORRECCIÓN CRÍTICA: Esto evita que el servidor se cierre en Windows
 matplotlib.use('Agg') 
 
@@ -7,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, StreamingResponse
 from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask 
+import json
 
 import pandas as pd
 import plotly.express as px
@@ -30,10 +33,10 @@ origins = [
 ]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,      # Qué dominios pueden conectarse
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],        # Permitir todos los métodos (POST, GET, etc.)
-    allow_headers=["*"],        # Permitir todos los headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # **********************************
@@ -182,18 +185,27 @@ class ResumeData(BaseModel):
     diplomas: List[str]
 
 @app.post("/generate-cv")
-async def generate_cv_endpoint(data: ResumeData):
+async def generate_cv_endpoint(
+    data: str = Form(...),        # Recibe el JSON como texto
+    foto: UploadFile = File(None) # Recibe el archivo (opcional)
+):
     try:
-        # 1. Convertimos el modelo Pydantic a dict
-        data_dict = data.dict()
+        # 1. Parsear el JSON que viene de Angular
+        data_dict = json.loads(data)
         
-        # 2. Llamamos a tu lógica separada
+        # 2. (Opcional) Aquí procesaríamos la foto más adelante
+        if foto:
+            print(f"Recibida foto: {foto.filename}")
+            # content = await foto.read()
+            # data_dict['foto_bytes'] = content 
+
+        # 3. Generar el Word
         file_stream = crear_docx_cv(data_dict)
         
-        # 3. Definimos nombre del archivo
-        filename = f"HV_{data_dict['personal'].get('nombre', 'Usuario')}.docx"
+        # 4. Preparar nombre del archivo
+        nombre_archivo = data_dict['personal'].get('nombre', 'Curriculum').replace(" ", "_")
+        filename = f"HV_{nombre_archivo}.docx"
         
-        # 4. Retornamos el stream
         headers = {
             'Content-Disposition': f'attachment; filename="{filename}"'
         }
@@ -205,6 +217,6 @@ async def generate_cv_endpoint(data: ResumeData):
         )
         
     except Exception as e:
-        # Log del error real para ti
-        print(f"Error generando CV: {e}")
+        # ESTO ES LO QUE NECESITAMOS VER SI FALLA
+        print(f"🔥 ERROR EN EL SERVIDOR: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))

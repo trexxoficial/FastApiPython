@@ -9,3 +9,6 @@ Mac/Linux:
 
 
 uvicorn main:app --reload
+
+Script para generar plantilla de cv
+python crear_plantilla.py
