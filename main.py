@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, Streamin
 from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask 
 import json
+import traceback
 
 import pandas as pd
 import plotly.express as px
@@ -186,37 +187,34 @@ class ResumeData(BaseModel):
 
 @app.post("/generate-cv")
 async def generate_cv_endpoint(
-    data: str = Form(...),        # Recibe el JSON como texto
-    foto: UploadFile = File(None) # Recibe el archivo (opcional)
+    data: str = Form(...), 
+    foto: UploadFile = File(None)
 ):
     try:
-        # 1. Parsear el JSON que viene de Angular
         data_dict = json.loads(data)
         
-        # 2. (Opcional) Aquí procesaríamos la foto más adelante
+        # 1. LEER BYTES DE FOTO
+        foto_bytes = None
         if foto:
-            print(f"Recibida foto: {foto.filename}")
-            # content = await foto.read()
-            # data_dict['foto_bytes'] = content 
+            print(f"📸 Recibida foto: {foto.filename}")
+            foto_bytes = await foto.read() # <--- Leemos los bytes
 
-        # 3. Generar el Word
-        file_stream = crear_docx_cv(data_dict)
+        # 2. PASAR LOS BYTES A LA FUNCIÓN (¡Aquí estaba el error!)
+        # Antes tenías: crear_docx_cv(data_dict)
+        # Ahora pon:
+        file_stream = crear_docx_cv(data_dict, foto_bytes) 
         
-        # 4. Preparar nombre del archivo
-        nombre_archivo = data_dict['personal'].get('nombre', 'Curriculum').replace(" ", "_")
-        filename = f"HV_{nombre_archivo}.docx"
-        
-        headers = {
-            'Content-Disposition': f'attachment; filename="{filename}"'
-        }
+        # ... resto del código (nombre archivo, headers, return) ...
+        nombre = data_dict.get('personal', {}).get('nombre', 'Curriculum')
+        filename = f"HV_{nombre.replace(' ', '_')}.docx"
         
         return StreamingResponse(
             file_stream, 
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers=headers
+            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
         )
-        
+
     except Exception as e:
-        # ESTO ES LO QUE NECESITAMOS VER SI FALLA
-        print(f"🔥 ERROR EN EL SERVIDOR: {str(e)}") 
-        raise HTTPException(status_code=500, detail=str(e))
+        print("\n🔥 ERROR CRÍTICO DETALLADO:")
+        traceback.print_exc()  # <--- Esto imprimirá el error real en la consola negra
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
