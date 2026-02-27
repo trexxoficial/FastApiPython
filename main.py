@@ -22,8 +22,8 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 
 # IMPORTACIÓN DE TU MÓDULOS
-from recibo_satisfaccion import procesar_recibo, DatosContrato
-from resolucion_contratos_umayor_generator import procesar_resolucion_contrato, DatosResolucionContrato
+from resolucion_contratos_umayor_generator import DatosResolucionContrato
+
 from cv_generator import crear_docx_cv 
 
 app = FastAPI()

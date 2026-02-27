@@ -6,18 +6,21 @@ from docxtpl import DocxTemplate
 class DatosResolucionContrato(BaseModel):
     numero_resolucion: str
     dia_resolucion: str
+    Mes_Resolucion: str
+    Año_Resolucion: str
     nombre_completo: str
     cedula: str
     facultad: str
-    dedicacion: str
+    fecha_inicio: str
+    fecha_Fin: str
     titulo: str
     valor_hora: str
     modalidad: str
     intensidad_horaria: str
     intensidad_mensual: str
-    fecha_inicio: str
-    fecha_fin: str
-    dia_notificacion: str
+    Total_Horas: str
+    dedicacion: str
+    decano: str
 
 def formatear_fecha_espanol(fecha_str: str) -> str:
     if not fecha_str or "-" not in fecha_str:
