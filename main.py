@@ -23,6 +23,7 @@ from typing import List, Dict, Any
 
 # IMPORTACIÓN DE TU MÓDULOS
 from recibo_satisfaccion import procesar_recibo, DatosContrato
+from resolucion_contratos_umayor_generator import procesar_resolucion_contrato, DatosResolucionContrato
 from cv_generator import crear_docx_cv 
 
 app = FastAPI()
@@ -127,6 +128,35 @@ async def generar_recibo_endpoint(data: DatosContrato):
     except Exception as e:
         print(f"Error generando recibo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+
+@app.post("/generar-resolucion-contrato-umayor")
+async def generar_resolucion_contrato_endpoint(data: DatosResolucionContrato):
+    try:
+        # Generar el archivo en memoria
+        archivo_stream = procesar_resolucion_contrato(data)
+
+        # Crear un nombre de archivo dinámico y sin espacios
+        nombre_limpio = data.nombre_completo.replace(' ', '_')
+        nombre_archivo = f"Resolucion_{data.numero_resolucion}_{nombre_limpio}.docx"
+        
+        return StreamingResponse(
+            archivo_stream,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{nombre_archivo}"'}
+        )
+
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        print(f"Error generando resolución de contrato: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+
 
 # 2. Endpoint de Gráfica de Prueba (EXISTENTE)
 @app.get("/graficaPrueba")
