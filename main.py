@@ -1,10 +1,9 @@
 import matplotlib
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 # CORRECCIÓN CRÍTICA: Esto evita que el servidor se cierre en Windows
 matplotlib.use('Agg') 
 
-from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, StreamingResponse
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -22,7 +21,8 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 
 # IMPORTACIÓN DE TU MÓDULOS
-from resolucion_contratos_umayor_generator import DatosResolucionContrato
+from resolucion_contratos_umayor_generator import procesar_resolucion_contrato, normalizar_clave
+from recibo_satisfaccion import procesar_recibo, DatosContrato
 
 from cv_generator import crear_docx_cv 
 
@@ -133,25 +133,28 @@ async def generar_recibo_endpoint(data: DatosContrato):
 
 
 @app.post("/generar-resolucion-contrato-umayor")
-async def generar_resolucion_contrato_endpoint(data: DatosResolucionContrato):
+async def generar_resolucion_contrato_endpoint(request: Request):
     try:
-        # Generar el archivo en memoria
+        data = await request.json()
+        
+        # Generar el archivo
         archivo_stream = procesar_resolucion_contrato(data)
 
-        # Crear un nombre de archivo dinámico y sin espacios
-        nombre_limpio = data.nombre_completo.replace(' ', '_')
-        nombre_archivo = f"Resolucion_{data.numero_resolucion}_{nombre_limpio}.docx"
+        # Extraer datos para el nombre del archivo usando la función normalizada
+        # Esto evita errores si en el JSON viene "Nombre_Completo" o "nombre_completo"
+        nro = data.get("numero_resolucion", data.get("Numero_Resolucion", "0"))
+        nom = data.get("nombre_completo", data.get("Nombre_Completo", "Documento"))
+        
+        # Limpiamos el nombre para el archivo físico
+        nombre_archivo = f"Resolucion_{nro}_{str(nom).replace(' ', '_')}.docx"
         
         return StreamingResponse(
             archivo_stream,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={"Content-Disposition": f'attachment; filename="{nombre_archivo}"'}
         )
-
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        print(f"Error generando resolución de contrato: {e}")
+        print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
 

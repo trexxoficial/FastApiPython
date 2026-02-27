@@ -1,52 +1,30 @@
 import io
 import os
-from pydantic import BaseModel
+import unicodedata
 from docxtpl import DocxTemplate
 
-class DatosResolucionContrato(BaseModel):
-    numero_resolucion: str
-    dia_resolucion: str
-    Mes_Resolucion: str
-    Año_Resolucion: str
-    nombre_completo: str
-    cedula: str
-    facultad: str
-    fecha_inicio: str
-    fecha_Fin: str
-    titulo: str
-    valor_hora: str
-    modalidad: str
-    intensidad_horaria: str
-    intensidad_mensual: str
-    Total_Horas: str
-    dedicacion: str
-    decano: str
+def normalizar_clave(clave: str) -> str:
+    # Quita acentos y pasa a minúsculas (Ej: "Decano" -> "decano")
+    clave_limpia = ''.join((c for c in unicodedata.normalize('NFD', clave) if unicodedata.category(c) != 'Mn'))
+    # Reemplazamos espacios por guiones bajos por si acaso, y todo a minúsculas
+    return clave_limpia.lower().strip().replace(" ", "_")
 
 def formatear_fecha_espanol(fecha_str: str) -> str:
-    if not fecha_str or "-" not in fecha_str:
-        return fecha_str
-    
+    if not fecha_str or "-" not in str(fecha_str):
+        return str(fecha_str) if fecha_str else ""
     try:
-        # Divide la fecha YYYY-MM-DD
-        anio, mes, dia = fecha_str.split("-")
-        
+        anio, mes, dia = str(fecha_str).split("-")
         meses = {
             "01": "enero", "02": "febrero", "03": "marzo",
             "04": "abril", "05": "mayo", "06": "junio",
             "07": "julio", "08": "agosto", "09": "septiembre",
             "10": "octubre", "11": "noviembre", "12": "diciembre"
         }
-        
-        # int(dia) quita el cero a la izquierda (ej. "08" -> "8")
-        dia_limpio = str(int(dia))
-        mes_texto = meses.get(mes, "")
-        
-        return f"{dia_limpio} de {mes_texto} del {anio}"
-    except Exception:
-        # En caso de error, retorna la fecha original
-        return fecha_str
+        return f"{int(dia)} de {meses.get(mes, '')} del {anio}"
+    except:
+        return str(fecha_str)
 
-def procesar_resolucion_contrato(data: DatosResolucionContrato) -> io.BytesIO:
+def procesar_resolucion_contrato(data_dict: dict) -> io.BytesIO:
     base_dir = os.path.dirname(os.path.abspath(__file__))
     ruta_plantilla = os.path.join(base_dir, "plantillas", "plantilla_resolucion.docx")
     
@@ -55,16 +33,25 @@ def procesar_resolucion_contrato(data: DatosResolucionContrato) -> io.BytesIO:
     
     doc = DocxTemplate(ruta_plantilla)
     
-    if hasattr(data, 'model_dump'):
-        context = data.model_dump()
-    else:
-        context = data.dict()
+    # 1. Normalizar todas las llaves que llegan desde el Excel
+    context = {}
+    for key, value in data_dict.items():
+        clave_normalizada = normalizar_clave(key)
+        context[clave_normalizada] = value
         
-    # --- NUEVO: Sobrescribir las fechas con el nuevo formato ---
-    context["fecha_inicio"] = formatear_fecha_espanol(context["fecha_inicio"])
-    context["fecha_fin"] = formatear_fecha_espanol(context["fecha_fin"])
-    # -----------------------------------------------------------
+    # 2. Asegurar variables críticas (si vienen vacías o con otro nombre)
+    context["decano"] = context.get("decano", "")
+    
+    if not context.get("dia_notificacion"):
+        context["dia_notificacion"] = context.get("dia_resolucion", "")
         
+    # 3. Aplicar formato de fechas
+    if "fecha_inicio" in context:
+        context["fecha_inicio"] = formatear_fecha_espanol(context["fecha_inicio"])
+    if "fecha_fin" in context:
+        context["fecha_fin"] = formatear_fecha_espanol(context["fecha_fin"])
+        
+    # 4. Renderizar
     doc.render(context)
     
     archivo_stream = io.BytesIO()
