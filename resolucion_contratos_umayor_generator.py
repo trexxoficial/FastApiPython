@@ -41,6 +41,7 @@ def procesar_resolucion_contrato(data_dict: dict) -> io.BytesIO:
         
     # 2. Asegurar variables críticas (si vienen vacías o con otro nombre)
     context["decano"] = context.get("decano", "")
+    context["total_horas"] = context.get("total_horas", "") 
     
     if not context.get("dia_notificacion"):
         context["dia_notificacion"] = context.get("dia_resolucion", "")
