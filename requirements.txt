@@ -12,9 +12,7 @@ pandas
 seaborn
 pillow
 unicodedata2
-torch
-torchaudio
-demucs
+# torch
+# torchaudio
+# demucs
 ffmpeg-python
-mise
-libpq5
