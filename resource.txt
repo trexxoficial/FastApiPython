@@ -21,3 +21,24 @@ uvicorn main:app --reload --port 8082
 https://dashboard.render.com/web/srv-d1e8iu2li9vc739pmgj0/deploys/dep-d1eairvgi27c73ed3aa0
 trexxoficialco@gmail.com
 
+
+
+
+
+******************************-------------- *************************
+python -m uvicorn main:app --reload
+python -m uvicorn recibo_satisfaccion:app --reload
+
+
+# Windows:
+python -m venv venv
+
+# Mac/Linux:
+Mac/Linux:
+
+
+uvicorn main:app --reload
+
+Script para generar plantilla de cv
+python crear_plantilla.py
+
