@@ -1,6 +1,7 @@
 python -m uvicorn main:app --reload
 python -m uvicorn recibo_satisfaccion:app --reload
 
+
 # Windows:
 python -m venv venv
 
