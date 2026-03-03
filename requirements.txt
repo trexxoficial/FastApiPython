@@ -17,3 +17,4 @@ torchaudio
 demucs
 ffmpeg-python
 mise
+libpq5
