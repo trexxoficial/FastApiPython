@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # IMPORTACIÓN DE TU MÓDULOS
 from resolucion_contratos_umayor_generator import procesar_resolucion_contrato, normalizar_clave
@@ -251,3 +251,139 @@ async def generate_cv_endpoint(
         print("\n🔥 ERROR CRÍTICO DETALLADO:")
         traceback.print_exc()  # <--- Esto imprimirá el error real en la consola negra
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    
+
+
+
+# Rúbrica para evaluar Recursos Educativos Digitales (RED)
+class CriterioInput(BaseModel):
+    nombre: str
+    valor: float  # Valor decimal, ej: 0.15 para 15%
+    peso_maximo: int  # 15, 10 o 5, para aplicar la escala correcta
+
+class EvaluacionRequest(BaseModel):
+    resultado_global: float  # Valor decimal, ej: 0.92 para 92%
+    criterios: List[CriterioInput]
+    evaluador: str = "Joaquin Lara Sierra"
+
+class CriterioOutput(BaseModel):
+    nombre: str
+    nivel: str
+    color_hex: str
+
+class EvaluacionResponse(BaseModel):
+    nivel_global: str
+    mensaje_global: str
+    color_global_hex: str
+    criterios_evaluados: List[CriterioOutput]
+    recomendaciones: List[str]
+    texto_salida: str
+
+# =========================
+# LÓGICA DE NEGOCIO
+# =========================
+
+def obtener_nivel_global(resultado: float) -> tuple:
+    if resultado >= 92:
+        return "Excelente", "Excelente: Diseño pedagógico robusto, contextualizado e innovador.", "#00B0F0"
+    elif resultado >= 87:
+        return "Bueno", "Bueno: Cumple con los criterios, con oportunidades de mejora.", "#0070C0"
+    elif resultado >= 74:
+        return "Aceptable", "Aceptable: Base lograda, requiere fortalecimiento.", "#FFC000"
+    elif resultado >= 61:
+        return "Insuficiente", "Insuficiente: Debilidades importantes.", "#FF6600"
+    else:
+        return "Deficiente", "?? Deficiente: No cumple criterios mínimos.", "#FF0000"
+
+def evaluar_criterio(valor: float, peso_maximo: int) -> tuple:
+    nivel = "Deficiente"
+    color = "#FFC7CE" # Deficiente por defecto
+    
+    if peso_maximo == 15:
+        if valor >= 15: nivel = "Excelente"
+        elif valor >= 13: nivel = "Bueno"
+        elif valor >= 11: nivel = "Aceptable"
+        elif valor >= 9: nivel = "Insuficiente"
+    elif peso_maximo == 10:
+        if valor >= 10: nivel = "Excelente"
+        elif valor >= 9: nivel = "Bueno"
+        elif valor >= 8: nivel = "Aceptable"
+        elif valor >= 7: nivel = "Insuficiente"
+    elif peso_maximo == 5:
+        if valor >= 5: nivel = "Excelente"
+        elif valor >= 4: nivel = "Bueno"
+        elif valor >= 3: nivel = "Aceptable"
+        elif valor >= 2: nivel = "Insuficiente"
+
+    # Asignación de colores según nivel
+    if nivel == "Excelente": color = "#C6EFCE"
+    elif nivel == "Bueno": color = "#BDD7EE"
+    elif nivel == "Aceptable": color = "#FFEB9C"
+    elif nivel == "Insuficiente": color = "#FFC000"
+
+    return nivel, color
+
+def generar_recomendacion(criterio_nombre: str) -> Optional[str]:
+    nombre_lower = criterio_nombre.lower()
+    if "pertinencia" in nombre_lower:
+        return "**Contextualizar mejor al entorno y necesidades del estudiante."
+    if "contenido" in nombre_lower:
+        return "**Mejorar profundidad conceptual y organización."
+    if "alineación" in nombre_lower or "alineacion" in nombre_lower:
+        return "**Alinear objetivos, actividades y evaluación."
+    if "diseño" in nombre_lower or "diseno" in nombre_lower:
+        return "**Fortalecer interacción y estrategias didácticas."
+    if "usabilidad" in nombre_lower:
+        return "**Simplificar navegación y experiencia de usuario."
+    if "accesibilidad" in nombre_lower:
+        return "**Incorporar principios de inclusión y accesibilidad."
+    if "técnica" in nombre_lower or "tecnica" in nombre_lower or "multimedia" in nombre_lower:
+        return "**Mejorar calidad técnica y recursos multimedia."
+    if "evaluación" in nombre_lower or "evaluacion" in nombre_lower:
+        return "**Fortalecer instrumentos de evaluación y feedback."
+    if "reutilización" in nombre_lower or "reutilizacion" in nombre_lower:
+        return "**Optimizar posibilidades de reutilización y actualización."
+    return None
+
+# =========================
+# ENDPOINT
+# =========================
+
+@app.post("/api/v1/evaluar-red", response_model=EvaluacionResponse)
+def evaluar_red(payload: EvaluacionRequest):
+    resultado_porcentaje = payload.resultado_global * 100
+    nivel_glb, msj_glb, color_glb = obtener_nivel_global(resultado_porcentaje)
+    
+    criterios_out = []
+    recomendaciones_out = []
+    texto_criterios = "\n\n== Análisis por criterios: ==\n"
+    
+    for crit in payload.criterios:
+        valor_porcentaje = crit.valor * 100
+        nivel_crit, color_crit = evaluar_criterio(valor_porcentaje, crit.peso_maximo)
+        
+        criterios_out.append(CriterioOutput(
+            nombre=crit.nombre,
+            nivel=nivel_crit,
+            color_hex=color_crit
+        ))
+        
+        texto_criterios += f"• {crit.nombre}: {nivel_crit}\n"
+        
+        if nivel_crit in ["Insuficiente", "Deficiente"]:
+            recom = generar_recomendacion(crit.nombre)
+            if recom:
+                if recom not in recomendaciones_out: # Evitar duplicados si aplican varias reglas
+                    recomendaciones_out.append(recom)
+                texto_criterios += recom + "\n"
+
+    texto_final = f"{msj_glb}{texto_criterios}\n\nEvaluador: {payload.evaluador}"
+    
+    return EvaluacionResponse(
+        nivel_global=nivel_glb,
+        mensaje_global=msj_glb,
+        color_global_hex=color_glb,
+        criterios_evaluados=criterios_out,
+        recomendaciones=recomendaciones_out,
+        texto_salida=texto_final
+    )
