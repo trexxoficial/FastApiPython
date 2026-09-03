@@ -39,7 +39,7 @@ def formatear_fecha_espanol(fecha_str: str) -> str:
 
 def procesar_resolucion_contrato(data_dict: dict) -> io.BytesIO:
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    ruta_plantilla = os.path.join(base_dir, "plantillas", "plantilla_resolucion.docx")
+    ruta_plantilla = os.path.join(base_dir, "plantillas", "plantilla_resolucion_2026.docx")
     
     if not os.path.exists(ruta_plantilla):
         raise ValueError(f"No se encontró la plantilla en: {ruta_plantilla}")
