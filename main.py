@@ -161,7 +161,7 @@ async def generar_resolucion_contrato_endpoint(request: Request):
 @app.get("/descargar-plantilla-resolucion-excel")
 def descargar_plantilla_excel():
     # Se agrega la carpeta 'plantillas/' a la ruta
-    file_path = "plantillas/COMBINACION_DE_CORRESPONDENCIA.xlsm"
+    file_path = "plantillas/data_resoluciones.xlsx"
     
     # Validamos que el archivo exista en el servidor
     if not os.path.exists(file_path):
@@ -169,7 +169,7 @@ def descargar_plantilla_excel():
         
     return FileResponse(
         path=file_path,
-        filename="COMBINACION_DE_CORRESPONDENCIA.xlsm",
+        filename="data_resoluciones.xlsx",
         # Este es el tipo MIME exacto para archivos Excel con macros (.xlsm)
         media_type="application/vnd.ms-excel.sheet.macroEnabled.12" 
     )
