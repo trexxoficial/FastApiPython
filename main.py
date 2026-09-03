@@ -160,7 +160,8 @@ async def generar_resolucion_contrato_endpoint(request: Request):
 
 @app.get("/descargar-plantilla-resolucion-excel")
 def descargar_plantilla_excel():
-    file_path = "COMBINACION_DE_CORRESPONDENCIA.xlsm"
+    # Se agrega la carpeta 'plantillas/' a la ruta
+    file_path = "plantillas/COMBINACION_DE_CORRESPONDENCIA.xlsm"
     
     # Validamos que el archivo exista en el servidor
     if not os.path.exists(file_path):
