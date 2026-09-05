@@ -1,8 +1,20 @@
+[providers]
+exclude = ["node"] # Si solo quieres que detecte Python
+
 [phases.setup]
-nixPkgs = ["python311", "gcc", "libpq-dev"]
+# Estas son las librerías de C que Linux necesita para que WeasyPrint funcione
+aptPkgs = [
+    "libpango-1.0-0",
+    "libpangoft2-1.0-0",
+    "libcairo2",
+    "libffi-dev",
+    "libgdk-pixbuf-2.0-0",
+    "shared-mime-info",
+    "libgobject-2.0-0"
+]
 
 [phases.install]
-cmds = ["python -m venv /opt/venv && /opt/venv/bin/pip install -r requirements.txt"]
+cmds = ["python -m venv /opt/venv", ". /opt/venv/bin/activate", "pip install -r requirements.txt"]
 
 [start]
-cmd = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"
