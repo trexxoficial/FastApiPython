@@ -114,8 +114,8 @@ async def generar_cv(data: str = Form(...), foto: UploadFile = File(None)):
         cv_data = json.loads(data)
         
         # 1. Configurar Jinja2 (ajusta el nombre del archivo si es necesario)
-        env = Environment(loader=FileSystemLoader('graficos/plantillas'))
-        template = env.get_template('cv_template.html') # <-- Nombre corregido
+        env = Environment(loader=FileSystemLoader('graficos'))
+        template = env.get_template('cv_template.html')
         
         # 2. Convertir imagen a Base64 nativamente si existe
         foto_b64 = None
