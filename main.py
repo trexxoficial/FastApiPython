@@ -261,41 +261,6 @@ class ResumeData(BaseModel):
     skills: List[str]
     diplomas: List[str]
 
-@app.post("/generate-cv")
-async def generate_cv_endpoint(
-    data: str = Form(...), 
-    foto: UploadFile = File(None)
-):
-    try:
-        data_dict = json.loads(data)
-        
-        # 1. LEER BYTES DE FOTO
-        foto_bytes = None
-        if foto:
-            print(f"📸 Recibida foto: {foto.filename}")
-            foto_bytes = await foto.read() # <--- Leemos los bytes
-
-        # 2. PASAR LOS BYTES A LA FUNCIÓN (¡Aquí estaba el error!)
-        # Antes tenías: crear_docx_cv(data_dict)
-        # Ahora pon:
-        file_stream = crear_docx_cv(data_dict, foto_bytes) 
-        
-        # ... resto del código (nombre archivo, headers, return) ...
-        nombre = data_dict.get('personal', {}).get('nombre', 'Curriculum')
-        filename = f"HV_{nombre.replace(' ', '_')}.docx"
-        
-        return StreamingResponse(
-            file_stream, 
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
-        )
-
-    except Exception as e:
-        print("\n🔥 ERROR CRÍTICO DETALLADO:")
-        traceback.print_exc()  # <--- Esto imprimirá el error real en la consola negra
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-    
-
 
 
 # Rúbrica para evaluar Recursos Educativos Digitales (RED)
