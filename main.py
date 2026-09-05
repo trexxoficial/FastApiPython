@@ -33,6 +33,7 @@ app = FastAPI()
 origins = [
     "http://localhost:4200",    # Puerto por defecto de Angular
     "http://127.0.0.1:4200",
+    "http://127.0.0.1:1987",
     "*"                         # (Opcional) Permite a todo el mundo (útil para desarrollo)
 ]
 app.add_middleware(
