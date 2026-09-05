@@ -39,7 +39,7 @@ def formatear_fecha_espanol(fecha_str: str) -> str:
 
 def procesar_resolucion_contrato(data_dict: dict) -> io.BytesIO:
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    ruta_plantilla = os.path.join(base_dir, "plantillas", "plantilla_resolucion.docx")
+    ruta_plantilla = os.path.join(base_dir, "plantillas", "plantilla_resolucion_(2).docx")
     
     if not os.path.exists(ruta_plantilla):
         raise ValueError(f"No se encontró la plantilla en: {ruta_plantilla}")
@@ -60,7 +60,8 @@ def procesar_resolucion_contrato(data_dict: dict) -> io.BytesIO:
     context["decano"] = context.get("decano", "")
     context["total_horas"] = context.get("total_horas", "")
     context["dia_resolucion"] = context.get("dia_resolucion", "")
-    context["anio_resolucion"] = context.get("anio_resolucion", "") # Nota: 'n' no 'ñ'
+    context["anio_resolucion"] = context.get("anio_resolucion", "")
+    context["cedula"] = context.get("cedula", "")
     
     # Si dia_notificacion no viene, hereda el dia de la resolución
     if not context.get("dia_notificacion"):
