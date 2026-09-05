@@ -1,5 +1,5 @@
 import matplotlib
-
+import base64
 from fastapi import FastAPI, Response, UploadFile, File, Form, HTTPException, Request
 # CORRECCIÓN CRÍTICA: Esto evita que el servidor se cierre en Windows
 matplotlib.use('Agg') 
@@ -110,29 +110,43 @@ app.mount("/dashboard1", WSGIMiddleware(flask_server))
 
 @app.post("/api/generar-cv")
 async def generar_cv(data: str = Form(...), foto: UploadFile = File(None)):
-    cv_data = json.loads(data)
+    try:
+        cv_data = json.loads(data)
+        
+        # 1. Configurar Jinja2 (ajusta el nombre del archivo si es necesario)
+        env = Environment(loader=FileSystemLoader('graficos/plantillas'))
+        template = env.get_template('cv_template.html') # <-- Nombre corregido
+        
+        # 2. Convertir imagen a Base64 nativamente si existe
+        foto_b64 = None
+        if foto:
+            bytes_foto = await foto.read()
+            b64_cadena = base64.b64encode(bytes_foto).decode('utf-8')
+            foto_b64 = f"data:{foto.content_type};base64,{b64_cadena}"
+        
+        # 3. Renderizar el HTML
+        html_out = template.render(
+            personal=cv_data.get('personal', {}),
+            experiencia=cv_data.get('experiencia', []),
+            formacion=cv_data.get('formacion', []),
+            skills=cv_data.get('skills', []),
+            color_tema=cv_data.get('colorTema', '#5e72e4'),
+            foto_base64=foto_b64
+        )
+        
+        # 4. Generar PDF
+        pdf_bytes = weasyprint.HTML(string=html_out).write_pdf()
+        
+        return Response(content=pdf_bytes, media_type="application/pdf")
+
+    except Exception as e:
+        # Esto imprimirá el error real en la consola de Railway
+        print(f"🔥 ERROR AL GENERAR PDF: {e}") 
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
     
-    # Configurar Jinja2 para leer tu HTML
-    env = Environment(loader=FileSystemLoader('graficos/plantillas'))
-    template = env.get_template('/graficos/cv_template.html')
-    
-    # Si hay foto, puedes guardarla temporalmente y pasar la ruta, o convertirla a Base64 para inyectarla en el HTML
-    foto_b64 = await convertir_a_base64(foto) if foto else None
-    
-    # Renderizar el HTML con los datos (incluyendo el colorTema que agregamos)
-    html_out = template.render(
-        personal=cv_data.get('personal', {}),
-        experiencia=cv_data.get('experiencia', []),
-        formacion=cv_data.get('formacion', []),
-        skills=cv_data.get('skills', []),
-        color_tema=cv_data.get('colorTema', '#5e72e4'),
-        foto_base64=foto_b64
-    )
-    
-    # Generar el PDF
-    pdf_bytes = weasyprint.HTML(string=html_out).write_pdf()
-    
-    return Response(content=pdf_bytes, media_type="application/pdf")
 
 # 1. Endpoint para Generar Recibos (NUEVO)
 @app.post("/generar-recibo")
