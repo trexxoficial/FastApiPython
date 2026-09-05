@@ -1,6 +1,6 @@
 import matplotlib
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi import FastAPI, Response, UploadFile, File, Form, HTTPException, Request
 # CORRECCIÓN CRÍTICA: Esto evita que el servidor se cierre en Windows
 matplotlib.use('Agg') 
 
@@ -25,6 +25,8 @@ from resolucion_contratos_umayor_generator import procesar_resolucion_contrato, 
 from recibo_satisfaccion import procesar_recibo, DatosContrato
 
 from cv_generator import crear_docx_cv 
+import weasyprint
+from jinja2 import Environment, FileSystemLoader
 
 app = FastAPI()
 
@@ -105,6 +107,32 @@ app.mount("/dashboard1", WSGIMiddleware(flask_server))
 
 # **********************************
 # ============ ENDPOINTS DE LA API ================
+
+@app.post("/api/generar-cv")
+async def generar_cv(data: str = Form(...), foto: UploadFile = File(None)):
+    cv_data = json.loads(data)
+    
+    # Configurar Jinja2 para leer tu HTML
+    env = Environment(loader=FileSystemLoader('graficos/plantillas'))
+    template = env.get_template('cv_template.html')
+    
+    # Si hay foto, puedes guardarla temporalmente y pasar la ruta, o convertirla a Base64 para inyectarla en el HTML
+    foto_b64 = await convertir_a_base64(foto) if foto else None
+    
+    # Renderizar el HTML con los datos (incluyendo el colorTema que agregamos)
+    html_out = template.render(
+        personal=cv_data.get('personal', {}),
+        experiencia=cv_data.get('experiencia', []),
+        formacion=cv_data.get('formacion', []),
+        skills=cv_data.get('skills', []),
+        color_tema=cv_data.get('colorTema', '#5e72e4'),
+        foto_base64=foto_b64
+    )
+    
+    # Generar el PDF
+    pdf_bytes = weasyprint.HTML(string=html_out).write_pdf()
+    
+    return Response(content=pdf_bytes, media_type="application/pdf")
 
 # 1. Endpoint para Generar Recibos (NUEVO)
 @app.post("/generar-recibo")

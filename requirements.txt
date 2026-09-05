@@ -10,6 +10,8 @@ plotly
 matplotlib
 pandas
 seaborn
+weasyprint
+jinja2
 pillow
 unicodedata2
 # torch

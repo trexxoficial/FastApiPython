@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Hoja de Vida</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        /* Contenedor principal usando floats para máxima compatibilidad con WeasyPrint */
+        .resume-container {
+            width: 100%;
+            height: 100%;
+        }
+        .left-column {
+            width: 35%;
+            float: left;
+            background-color: #f8f9fa;
+            padding: 30px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+        .right-column {
+            width: 65%;
+            float: left;
+            padding: 30px 40px;
+            box-sizing: border-box;
+        }
+        /* Estilos de la Foto */
+        .profile-img-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .profile-img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--tema-color);
+        }
+        /* Títulos */
+        .name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #222;
+            text-transform: uppercase;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            color: var(--tema-color);
+            border-bottom: 1px solid var(--tema-color);
+            padding-bottom: 3px;
+        }
+        /* Listas y texto */
+        .info-text {
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+        .item-title {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 2px;
+            color: #222;
+        }
+        .item-subtitle {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .item-date {
+            color: var(--tema-color);
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .item-desc {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        ul.skills-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        ul.skills-list li {
+            margin-bottom: 5px;
+        }
+        ul.skills-list li::before {
+            content: "• ";
+            color: var(--tema-color);
+            font-weight: bold;
+        }
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+</head>
+<body style="--tema-color: var(--tema-color);">
+    <div class="resume-container clearfix">
+        
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="left-column">
+            
+            {% if foto_base64 %}
+            <div class="profile-img-container">
+                <img class="profile-img" src="data:image/jpeg;base64,{{ foto_base64 }}" alt="Foto de perfil">
+            </div>
+            {% endif %}
+
+            <div class="section-title">Contacto</div>
+            <div class="info-text"><strong>Dirección:</strong><br>{{ personal.direccion }}</div>
+            <div class="info-text"><strong>Teléfono:</strong><br>{{ personal.telefono }}</div>
+            <div class="info-text"><strong>Email:</strong><br>{{ personal.email }}</div>
+            
+            <div class="section-title">Datos Personales</div>
+            <div class="info-text"><strong>Cédula:</strong> {{ personal.cedula }}</div>
+            <div class="info-text"><strong>Edad:</strong> {{ personal.edad }} años</div>
+            <div class="info-text"><strong>Lugar de Nac.:</strong> {{ personal.lugarNacimiento }}</div>
+            <div class="info-text"><strong>Estado Civil:</strong> {{ personal.estadoCivil }}</div>
+
+            {% if formacion|length > 0 %}
+            <div class="section-title">Formación</div>
+            {% for edu in formacion %}
+            <div class="item-desc">
+                <div class="item-title">{{ edu.titulo }}</div>
+                <div class="item-subtitle">{{ edu.institucion }}</div>
+                <div class="item-date">{{ edu.fecha }}</div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if skills|length > 0 %}
+            <div class="section-title">Competencias</div>
+            <ul class="skills-list">
+                {% for skill in skills %}
+                <li>{{ skill }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <div class="right-column">
+            
+            <h1 class="name">{{ personal.nombre }}</h1>
+            
+            <div class="item-desc">
+                {{ personal.perfil }}
+            </div>
+
+            {% if experiencia|length > 0 %}
+            <div class="section-title">Experiencia Laboral</div>
+            {% for exp in experiencia %}
+            <div class="item-desc">
+                <div class="item-title">{{ exp.cargo }}</div>
+                <div class="item-subtitle">{{ exp.empresa }} | <span class="item-date">{{ exp.fecha }}</span></div>
+                <div>{{ exp.descripcion }}</div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+        </div>
+    </div>
+</body>
+</html>
