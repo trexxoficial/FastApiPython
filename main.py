@@ -114,7 +114,7 @@ async def generar_cv(data: str = Form(...), foto: UploadFile = File(None)):
     
     # Configurar Jinja2 para leer tu HTML
     env = Environment(loader=FileSystemLoader('graficos/plantillas'))
-    template = env.get_template('cv_template.html')
+    template = env.get_template('/graficos/cv_template.html')
     
     # Si hay foto, puedes guardarla temporalmente y pasar la ruta, o convertirla a Base64 para inyectarla en el HTML
     foto_b64 = await convertir_a_base64(foto) if foto else None
