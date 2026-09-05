@@ -108,6 +108,32 @@ app.mount("/dashboard1", WSGIMiddleware(flask_server))
 # **********************************
 # ============ ENDPOINTS DE LA API ================
 
+@app.post("/api/generar-cv")
+async def generar_cv(data: str = Form(...), foto: UploadFile = File(None)):
+    cv_data = json.loads(data)
+    
+    # Configurar Jinja2 para leer tu HTML
+    env = Environment(loader=FileSystemLoader('graficos/plantillas'))
+    template = env.get_template('/graficos/cv_template.html')
+    
+    # Si hay foto, puedes guardarla temporalmente y pasar la ruta, o convertirla a Base64 para inyectarla en el HTML
+    foto_b64 = await convertir_a_base64(foto) if foto else None
+    
+    # Renderizar el HTML con los datos (incluyendo el colorTema que agregamos)
+    html_out = template.render(
+        personal=cv_data.get('personal', {}),
+        experiencia=cv_data.get('experiencia', []),
+        formacion=cv_data.get('formacion', []),
+        skills=cv_data.get('skills', []),
+        color_tema=cv_data.get('colorTema', '#5e72e4'),
+        foto_base64=foto_b64
+    )
+    
+    # Generar el PDF
+    pdf_bytes = weasyprint.HTML(string=html_out).write_pdf()
+    
+    return Response(content=pdf_bytes, media_type="application/pdf")
+
 # 1. Endpoint para Generar Recibos (NUEVO)
 @app.post("/generar-recibo")
 async def generar_recibo_endpoint(data: DatosContrato):
@@ -234,42 +260,6 @@ class ResumeData(BaseModel):
     experiencia: List[Dict[str, Any]]
     skills: List[str]
     diplomas: List[str]
-
-@app.post("/generate-cv")
-async def generate_cv_endpoint(
-    data: str = Form(...), 
-    foto: UploadFile = File(None)
-):
-    try:
-        data_dict = json.loads(data)
-        
-        # 1. LEER BYTES DE FOTO
-        foto_bytes = None
-        if foto:
-            print(f"📸 Recibida foto: {foto.filename}")
-            foto_bytes = await foto.read() # <--- Leemos los bytes
-
-        # 2. PASAR LOS BYTES A LA FUNCIÓN (¡Aquí estaba el error!)
-        # Antes tenías: crear_docx_cv(data_dict)
-        # Ahora pon:
-        file_stream = crear_docx_cv(data_dict, foto_bytes) 
-        
-        # ... resto del código (nombre archivo, headers, return) ...
-        nombre = data_dict.get('personal', {}).get('nombre', 'Curriculum')
-        filename = f"HV_{nombre.replace(' ', '_')}.docx"
-        
-        return StreamingResponse(
-            file_stream, 
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={'Content-Disposition': f'attachment; filename="{filename}"'}
-        )
-
-    except Exception as e:
-        print("\n🔥 ERROR CRÍTICO DETALLADO:")
-        traceback.print_exc()  # <--- Esto imprimirá el error real en la consola negra
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-    
-
 
 
 # Rúbrica para evaluar Recursos Educativos Digitales (RED)
