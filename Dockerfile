@@ -1,21 +1,29 @@
-# Usamos una imagen ligera de Python oficial
+# 1. Imagen base oficial de Python
 FROM python:3.11-slim
 
-# Instalamos dependencias del sistema necesarias para Matplotlib y documentos
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Establecemos el directorio de trabajo
+# 2. Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos los requerimientos e instalamos
+# 3. Instalación de dependencias del sistema obligatorias para WeasyPrint
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3-cffi \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libgobject-2.0-0 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copiar e instalar los requerimientos de Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos el resto del código y la carpeta de plantillas
+# 5. Copiar todo el código de tu proyecto
 COPY . .
 
-# Comando para arrancar Uvicorn
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+# 6. Exponer el puerto y arrancar Uvicorn
+# Railway inyecta dinámicamente la variable $PORT
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
