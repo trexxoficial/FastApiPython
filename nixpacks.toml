@@ -1,16 +1,13 @@
 [providers]
-exclude = ["node"] # Si solo quieres que detecte Python
+exclude = ["node"]
 
 [phases.setup]
-# Estas son las librerías de C que Linux necesita para que WeasyPrint funcione
-aptPkgs = [
-    "libpango-1.0-0",
-    "libpangoft2-1.0-0",
-    "libcairo2",
-    "libffi-dev",
-    "libgdk-pixbuf-2.0-0",
-    "shared-mime-info",
-    "libgobject-2.0-0"
+nixPkgs = [
+    "python311",
+    "cairo",
+    "pango",
+    "glib",
+    "fontconfig"
 ]
 
 [phases.install]
