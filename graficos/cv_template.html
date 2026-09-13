@@ -16,48 +16,53 @@
             color: #000000;
             font-size: 13px;
             line-height: 1.5;
-            /* Fondo infinito para mantener las columnas en múltiples páginas */
-            background-image: linear-gradient(90deg, #c9d6db 35%, #ffffff 35%);
-        }
-        .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
+            background-color: #ffffff; /* Fondo base blanco */
         }
 
-        /* --- FILA SUPERIOR (CABECERA) --- */
+        /* --- FONDO DE LA COLUMNA IZQUIERDA (Infinito en todas las páginas) --- */
+        .sidebar-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 35%;
+            background-color: #c9d6db;
+            z-index: -1; /* Se mantiene detrás de todo el contenido */
+        }
+
+        /* --- CABECERA (Sistema de celdas para altura perfecta) --- */
         .top-section {
+            display: table;
             width: 100%;
-            height: 310px; /* Altura fija para alinear ambos bloques */
-            display: block;
+            table-layout: fixed;
         }
         .top-left {
+            display: table-cell;
             width: 35%;
-            height: 100%;
-            float: left;
             background-color: #000000;
             position: relative;
-            box-sizing: border-box;
             text-align: center;
-            padding-top: 65px;
+            vertical-align: middle; /* Centra la foto verticalmente */
+            padding: 40px 0;
         }
         
-        /* Triángulos vectoriales para las esquinas del marco negro */
+        /* Triángulo Blanco (Esquina superior izquierda) */
         .top-left::before {
             content: "";
             position: absolute;
             top: 0;
             left: 0;
-            border-top: 85px solid #ffffff;
-            border-right: 85px solid transparent;
+            border-top: 60px solid #ffffff;
+            border-right: 60px solid transparent;
         }
+        /* Triángulo Gris (Esquina inferior derecha conectando con la barra gris) */
         .top-left::after {
             content: "";
             position: absolute;
             bottom: 0;
             right: 0;
-            border-bottom: 85px solid #c9d6db;
-            border-left: 85px solid transparent;
+            border-bottom: 60px solid #c9d6db;
+            border-left: 60px solid transparent;
         }
 
         .photo-frame {
@@ -65,33 +70,32 @@
             z-index: 10;
             display: inline-block;
             background-color: #ffffff;
-            padding: 3px;
-            border-radius: 15px;
+            padding: 4px;
+            border-radius: 18px; /* Borde exterior redondeado */
         }
         .profile-img {
-            width: 160px;
-            height: 160px;
-            border-radius: 12px;
+            width: 140px;
+            height: 140px;
+            border-radius: 14px; /* Borde interior de la foto */
             object-fit: cover;
             display: block;
         }
 
         .top-right {
+            display: table-cell;
             width: 65%;
-            height: 100%;
-            float: left;
             background-color: var(--tema-color, #0e6878);
-            box-sizing: border-box;
             padding: 40px;
             color: #ffffff;
+            vertical-align: middle;
         }
         .name {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 30px;
+            font-size: 28px;
             font-weight: bold;
             margin: 0 0 15px 0;
-            border-bottom: 3px solid #ffffff;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #ffffff;
+            padding-bottom: 8px;
             line-height: 1.1;
         }
         .profile-text {
@@ -100,30 +104,34 @@
             font-size: 13px;
             line-height: 1.5;
             text-align: justify;
-            white-space: pre-wrap; /* Mantiene los saltos de línea del textarea */
+            white-space: pre-wrap;
         }
 
-        /* --- FILA INFERIOR (CONTENIDO) --- */
-        .bottom-section {
+        /* --- CONTENIDO PRINCIPAL --- */
+        .content-wrapper {
+            position: relative;
             width: 100%;
-            display: block;
         }
-        .bottom-left {
+        
+        /* Se ancla sobre el fondo gris de forma absoluta en la primera página */
+        .sidebar-content {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 35%;
-            float: left;
-            box-sizing: border-box;
             padding: 30px 25px;
-            /* Fondo transparente, hereda el gris del body */
-        }
-        .bottom-right {
-            width: 65%;
-            float: left;
             box-sizing: border-box;
-            padding: 30px 40px;
-            /* Fondo transparente, hereda el blanco del body */
         }
 
-        /* Títulos de sección */
+        /* Se empuja hacia la derecha. Nunca se descuadrará en saltos de página */
+        .main-content {
+            margin-left: 35%; 
+            width: 65%;
+            padding: 30px 40px;
+            box-sizing: border-box;
+        }
+
+        /* --- TIPOGRAFÍA Y BLOQUES --- */
         .section-title {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             font-size: 15px;
@@ -171,50 +179,52 @@
         /* Bloques de Experiencia/Formación */
         .item-block {
             margin-bottom: 25px;
-            page-break-inside: avoid; /* EVITA QUE SE RECORTE A LA MITAD EN CAMBIO DE PÁGINA */
+            page-break-inside: avoid;
         }
         
-        /* Sistema de tabla para evitar superposición de fechas y títulos largos */
+        /* Sistema de Flotación seguro para Título y Fecha */
         .item-header {
-            display: table;
             width: 100%;
             margin-bottom: 4px;
+            overflow: hidden; /* Clearfix */
         }
-        .item-title-container {
-            display: table-cell;
+        .item-title {
+            float: left;
             width: 70%;
             font-weight: bold;
             font-size: 14px;
-            vertical-align: top;
-            padding-right: 10px;
         }
-        .item-date-container {
-            display: table-cell;
+        .item-date {
+            float: right;
             width: 30%;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 13px;
             text-align: right;
-            vertical-align: top;
         }
         
-        .item-sub {
+        .item-company {
+            clear: both; /* Asegura que baje del título/fecha */
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13.5px;
             color: #333;
             margin-bottom: 5px;
+            padding-top: 4px;
         }
         .item-desc {
             font-size: 13px;
             text-align: justify;
             line-height: 1.5;
-            white-space: pre-wrap; /* Mantiene los saltos de línea del textarea */
+            white-space: pre-wrap;
         }
     </style>
 </head>
 <body style="--tema-color: {{ color_tema }};">
 
-    <!-- CABECERA -->
-    <div class="top-section clearfix">
+    <!-- COLUMNA GRIS INFINITA -->
+    <div class="sidebar-bg"></div>
+
+    <!-- CABECERA DE PERFIL -->
+    <div class="top-section">
         <div class="top-left">
             {% if foto_base64 %}
             <div class="photo-frame">
@@ -228,11 +238,11 @@
         </div>
     </div>
 
-    <!-- CONTENIDO -->
-    <div class="bottom-section clearfix">
+    <!-- CONTENIDO GENERAL -->
+    <div class="content-wrapper">
         
-        <!-- COLUMNA IZQUIERDA -->
-        <div class="bottom-left">
+        <!-- COLUMNA LATERAL IZQUIERDA -->
+        <div class="sidebar-content">
             <h2 class="section-title">Contacto</h2>
             <div class="contact-item">
                 <span class="contact-icon">📍</span>
@@ -282,17 +292,17 @@
             {% endif %}
         </div>
 
-        <!-- COLUMNA DERECHA -->
-        <div class="bottom-right">
+        <!-- COLUMNA PRINCIPAL DERECHA -->
+        <div class="main-content">
             {% if formacion and formacion|length > 0 %}
             <h2 class="section-title">Formación</h2>
             {% for edu in formacion %}
             <div class="item-block">
                 <div class="item-header">
-                    <div class="item-title-container">{{ edu.titulo }}</div>
-                    <div class="item-date-container">{{ edu.fecha }}</div>
+                    <div class="item-title">{{ edu.titulo }}</div>
+                    <div class="item-date">{{ edu.fecha }}</div>
                 </div>
-                <div class="item-sub">{{ edu.institucion }}</div>
+                <div class="item-company">{{ edu.institucion }}</div>
             </div>
             {% endfor %}
             {% endif %}
@@ -302,10 +312,10 @@
             {% for exp in experiencia %}
             <div class="item-block">
                 <div class="item-header">
-                    <div class="item-title-container">{{ exp.cargo }}</div>
-                    <div class="item-date-container">{{ exp.fecha }}</div>
+                    <div class="item-title">{{ exp.cargo }}</div>
+                    <div class="item-date">{{ exp.fecha }}</div>
                 </div>
-                <div class="item-sub">{{ exp.empresa }}</div>
+                <div class="item-company">{{ exp.empresa }}</div>
                 {% if exp.descripcion %}
                 <div class="item-desc">{{ exp.descripcion }}</div>
                 {% endif %}
@@ -313,6 +323,7 @@
             {% endfor %}
             {% endif %}
         </div>
+        
     </div>
 
 </body>
