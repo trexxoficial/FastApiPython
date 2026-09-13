@@ -23,7 +23,7 @@
             box-sizing: border-box;
         }
 
-        /* --- CABECERA (Totalmente rígida con display: table) --- */
+        /* --- CABECERA --- */
         .header {
             display: table;
             width: 100%;
@@ -33,42 +33,31 @@
             display: table-cell;
             width: 35%;
             background-color: #000000;
-            position: relative;
+            /* Triángulos dibujados directamente en el fondo (Evita bugs de WeasyPrint) */
+            background-image: 
+                linear-gradient(to bottom right, #ffffff 50%, transparent 50.5%),
+                linear-gradient(to top left, #c9d6db 50%, transparent 50.5%);
+            background-size: 55px 55px, 55px 55px;
+            background-position: top left, bottom right;
+            background-repeat: no-repeat, no-repeat;
+            
             text-align: center;
             padding: 50px 0;
             vertical-align: middle;
         }
-        
-        /* Triángulos vectoriales anclados */
-        .header-left::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-top: 50px solid #ffffff;
-            border-right: 50px solid transparent;
-        }
-        .header-left::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            border-bottom: 50px solid #c9d6db;
-            border-left: 50px solid transparent;
-        }
 
+        /* Marco de foto premium */
         .photo-frame {
             display: inline-block;
             background-color: #ffffff;
-            padding: 4px;
-            border-radius: 16px;
+            padding: 5px; /* Ligeramente más grueso */
+            border-radius: 20px; /* Curvas más suaves */
             position: relative;
-            z-index: 10;
         }
         .photo-frame img {
             width: 140px;
             height: 140px;
-            border-radius: 12px;
+            border-radius: 15px; /* Acompaña la curva exterior */
             object-fit: cover;
             display: block;
         }
@@ -175,7 +164,6 @@
             table-layout: fixed;
         }
         
-        /* Títulos de cargo (Negro, Serif, Fuerte) */
         .item-title {
             display: table-cell;
             width: 75%;
@@ -197,7 +185,6 @@
             white-space: nowrap;
         }
         
-        /* Empresa destacada con el color del tema */
         .item-company {
             font-family: 'Georgia', 'Times New Roman', serif;
             font-weight: bold;
@@ -206,7 +193,6 @@
             margin-bottom: 8px;
         }
         
-        /* Descripciones en cursiva */
         .item-desc {
             font-family: 'Georgia', 'Times New Roman', serif;
             font-size: 13px;
