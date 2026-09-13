@@ -17,34 +17,29 @@
             color: #000000;
             font-size: 13px;
             line-height: 1.5;
-            /* Fondo continuo para múltiples páginas */
             background-image: linear-gradient(90deg, #c9d6db 35%, #ffffff 35%);
-        }
-        
-        /* Clase vital para evitar que los elementos floten fuera de lugar */
-        .clearfix::after {
-            content: "";
-            display: table;
-            clear: both;
         }
         * {
             box-sizing: border-box;
         }
 
-        /* --- CABECERA --- */
+        /* --- CABECERA (Totalmente rígida con display: table) --- */
         .header {
+            display: table;
             width: 100%;
+            table-layout: fixed;
         }
         .header-left {
+            display: table-cell;
             width: 35%;
-            float: left;
             background-color: #000000;
             position: relative;
             text-align: center;
             padding: 50px 0;
+            vertical-align: middle;
         }
         
-        /* Triángulos decorativos corregidos */
+        /* Triángulos vectoriales anclados */
         .header-left::before {
             content: "";
             position: absolute;
@@ -62,7 +57,6 @@
             border-left: 50px solid transparent;
         }
 
-        /* Marco de la foto corregido (sin espacios extra) */
         .photo-frame {
             display: inline-block;
             background-color: #ffffff;
@@ -76,15 +70,16 @@
             height: 140px;
             border-radius: 12px;
             object-fit: cover;
-            display: block; /* Elimina el margen inferior fantasma */
+            display: block; /* Evita márgenes fantasma debajo de la imagen */
         }
 
         .header-right {
+            display: table-cell;
             width: 65%;
-            float: left;
             background-color: var(--tema-color, #0e6878);
             padding: 40px;
             color: #ffffff;
+            vertical-align: middle;
         }
         .name {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -104,18 +99,25 @@
             white-space: pre-wrap;
         }
 
-        /* --- CONTENIDO PRINCIPAL --- */
+        /* --- CONTENIDO PRINCIPAL (Sin usar Floats para resistir saltos de página) --- */
         .content {
+            position: relative;
             width: 100%;
         }
+        
+        /* La columna izquierda se posiciona absoluto sobre el fondo gris */
         .sidebar {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 35%;
-            float: left;
             padding: 30px 20px;
         }
+        
+        /* La columna principal usa un margen del 35% que sobrevive a los cambios de hoja */
         .main {
+            margin-left: 35%; 
             width: 65%;
-            float: left;
             padding: 30px 40px;
         }
 
@@ -161,19 +163,22 @@
         }
         ul.custom-list li { margin-bottom: 6px; }
 
-        /* --- BLOQUES DE EXPERIENCIA/FORMACIÓN (CORREGIDOS) --- */
+        /* --- BLOQUES DE EXPERIENCIA/FORMACIÓN --- */
         .item-block {
             margin-bottom: 25px;
-            page-break-inside: avoid; /* Previene cortes entre páginas */
+            page-break-inside: avoid;
         }
         
+        /* Sistema de celdas estricto para evitar superposición de título y fecha */
         .item-header {
             display: table;
             width: 100%;
             margin-bottom: 4px;
+            table-layout: fixed; /* Fuerza a respetar los porcentajes */
         }
         .item-title {
             display: table-cell;
+            width: 75%; /* Máximo espacio para el cargo */
             font-weight: bold;
             font-size: 14px;
             vertical-align: top;
@@ -181,12 +186,12 @@
         }
         .item-date {
             display: table-cell;
+            width: 25%; /* Espacio protegido para la fecha */
             font-weight: bold;
             font-size: 13px;
             text-align: right;
             vertical-align: top;
-            white-space: nowrap; /* Impide que la fecha se divida en dos líneas */
-            width: 130px; /* Ancho fijo para proteger el espacio de la fecha */
+            white-space: nowrap; /* Evita que la fecha baje de línea */
         }
         
         .item-company {
@@ -206,7 +211,7 @@
 <body style="--tema-color: {{ color_tema }};">
 
     <!-- CABECERA -->
-    <div class="header clearfix">
+    <div class="header">
         <div class="header-left">
             {% if foto_base64 %}
             <div class="photo-frame">
@@ -221,7 +226,7 @@
     </div>
 
     <!-- CONTENIDO -->
-    <div class="content clearfix">
+    <div class="content">
         
         <!-- COLUMNA IZQUIERDA -->
         <div class="sidebar">
@@ -274,7 +279,7 @@
             {% endif %}
         </div>
 
-        <!-- COLUMNA DERECHA -->
+        <!-- COLUMNA DERECHA PRINCIPAL -->
         <div class="main">
             {% if formacion and formacion|length > 0 %}
             <h2 class="section-title">Formación</h2>
