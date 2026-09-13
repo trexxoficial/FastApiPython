@@ -7,15 +7,17 @@
         @page {
             size: A4;
             margin: 0;
+            padding: 0;
         }
         body {
-            /* Fuente Serif general para cuerpo y resumen */
             font-family: 'Georgia', 'Times New Roman', serif;
             margin: 0;
             padding: 0;
             color: #000000;
             font-size: 13px;
             line-height: 1.5;
+            /* Fondo infinito para mantener las columnas en múltiples páginas */
+            background-image: linear-gradient(90deg, #c9d6db 35%, #ffffff 35%);
         }
         .clearfix::after {
             content: "";
@@ -23,52 +25,82 @@
             display: table;
         }
 
-        /* --- FILA SUPERIOR (CABECERA DINÁMICA) --- */
+        /* --- FILA SUPERIOR (CABECERA) --- */
         .top-section {
-            display: table;
             width: 100%;
+            height: 310px; /* Altura fija para alinear ambos bloques */
+            display: block;
         }
         .top-left {
-            display: table-cell;
             width: 35%;
-            /* Cortes diagonales: Blanco arriba-izq, Negro centro, Gris abajo-der */
-            background: linear-gradient(135deg, #ffffff 8%, #000000 8%, #000000 85%, #c9d6db 85%);
-            vertical-align: middle;
+            height: 100%;
+            float: left;
+            background-color: #000000;
+            position: relative;
+            box-sizing: border-box;
             text-align: center;
-            padding: 40px 15px;
-            box-sizing: border-box;
+            padding-top: 65px;
         }
-        .top-right {
-            display: table-cell;
-            width: 65%;
-            /* Color exacto de la referencia (Teal oscuro) */
-            background-color: #0e6878; 
-            vertical-align: top;
-            padding: 40px;
-            color: #ffffff;
-            box-sizing: border-box;
+        
+        /* Triángulos vectoriales para las esquinas del marco negro */
+        .top-left::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-top: 85px solid #ffffff;
+            border-right: 85px solid transparent;
+        }
+        .top-left::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border-bottom: 85px solid #c9d6db;
+            border-left: 85px solid transparent;
+        }
+
+        .photo-frame {
+            position: relative;
+            z-index: 10;
+            display: inline-block;
+            background-color: #ffffff;
+            padding: 3px;
+            border-radius: 15px;
         }
         .profile-img {
             width: 160px;
             height: 160px;
-            border-radius: 15px;
-            border: 2px solid #ffffff;
+            border-radius: 12px;
             object-fit: cover;
+            display: block;
+        }
+
+        .top-right {
+            width: 65%;
+            height: 100%;
+            float: left;
+            background-color: var(--tema-color, #0e6878);
+            box-sizing: border-box;
+            padding: 40px;
+            color: #ffffff;
         }
         .name {
-            /* Fuente Sans-Serif solo para el nombre */
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 32px;
+            font-size: 30px;
             font-weight: bold;
             margin: 0 0 15px 0;
             border-bottom: 3px solid #ffffff;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
+            line-height: 1.1;
         }
         .profile-text {
+            font-family: 'Georgia', 'Times New Roman', serif;
             font-weight: bold;
             font-size: 13px;
-            line-height: 1.6;
+            line-height: 1.5;
             text-align: justify;
+            white-space: pre-wrap; /* Mantiene los saltos de línea del textarea */
         }
 
         /* --- FILA INFERIOR (CONTENIDO) --- */
@@ -79,100 +111,126 @@
         .bottom-left {
             width: 35%;
             float: left;
-            background-color: #c9d6db; /* Gris/Azul claro de la referencia */
-            min-height: 750px;
             box-sizing: border-box;
             padding: 30px 25px;
+            /* Fondo transparente, hereda el gris del body */
         }
         .bottom-right {
             width: 65%;
             float: left;
-            background-color: #ffffff;
-            min-height: 750px;
             box-sizing: border-box;
             padding: 30px 40px;
+            /* Fondo transparente, hereda el blanco del body */
         }
 
-        /* Estilos de Títulos */
+        /* Títulos de sección */
         .section-title {
-            font-size: 16px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 15px;
             font-weight: bold;
             text-transform: uppercase;
-            /* Líneas superior e inferior como en la referencia */
             border-top: 2px solid #000000;
             border-bottom: 2px solid #000000;
             padding: 5px 0;
             margin-top: 0;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-        .mt-40 {
-            margin-top: 40px;
-        }
+        .mt-30 { margin-top: 30px; }
 
-        /* Lista de Contacto */
+        /* Iconos y Contacto */
         .contact-item {
             display: table;
             width: 100%;
-            margin-bottom: 15px;
-            font-size: 13px;
+            margin-bottom: 10px;
+            font-size: 12px;
         }
         .contact-icon {
             display: table-cell;
-            width: 30px;
-            vertical-align: middle;
+            width: 25px;
+            vertical-align: top;
             font-size: 14px;
         }
         .contact-text {
             display: table-cell;
-            vertical-align: middle;
-            font-weight: bold;
+            vertical-align: top;
+            color: #222;
         }
 
-        /* Lista de Experiencia/Educación */
+        /* Listas de Competencias y Diplomas */
+        ul.custom-list {
+            padding-left: 15px;
+            margin: 0;
+            font-size: 12px;
+            font-weight: bold;
+            color: #222;
+        }
+        ul.custom-list li {
+            margin-bottom: 6px;
+        }
+
+        /* Bloques de Experiencia/Formación */
         .item-block {
             margin-bottom: 25px;
+            page-break-inside: avoid; /* EVITA QUE SE RECORTE A LA MITAD EN CAMBIO DE PÁGINA */
         }
+        
+        /* Sistema de tabla para evitar superposición de fechas y títulos largos */
         .item-header {
+            display: table;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        .item-title-container {
+            display: table-cell;
+            width: 70%;
             font-weight: bold;
             font-size: 14px;
-            margin-bottom: 2px;
+            vertical-align: top;
+            padding-right: 10px;
         }
-        .item-date {
-            float: right;
+        .item-date-container {
+            display: table-cell;
+            width: 30%;
             font-weight: bold;
             font-size: 12px;
+            text-align: right;
+            vertical-align: top;
         }
+        
         .item-sub {
             font-weight: bold;
             font-size: 14px;
+            color: #333;
             margin-bottom: 5px;
         }
         .item-desc {
             font-size: 13px;
             text-align: justify;
             line-height: 1.5;
+            white-space: pre-wrap; /* Mantiene los saltos de línea del textarea */
         }
     </style>
 </head>
-<body>
+<body style="--tema-color: {{ color_tema }};">
 
     <!-- CABECERA -->
-    <div class="top-section">
+    <div class="top-section clearfix">
         <div class="top-left">
             {% if foto_base64 %}
-            <img class="profile-img" src="{{ foto_base64 }}" alt="Foto de perfil">
+            <div class="photo-frame">
+                <img class="profile-img" src="{{ foto_base64 }}" alt="Foto de perfil">
+            </div>
             {% endif %}
         </div>
         <div class="top-right">
             <h1 class="name">{{ personal.nombre }}</h1>
-            <div class="profile-text">
-                {{ personal.perfil }}
-            </div>
+            <div class="profile-text">{{ personal.perfil }}</div>
         </div>
     </div>
 
     <!-- CONTENIDO -->
     <div class="bottom-section clearfix">
+        
         <!-- COLUMNA IZQUIERDA -->
         <div class="bottom-left">
             <h2 class="section-title">Contacto</h2>
@@ -206,10 +264,19 @@
             </div>
 
             {% if skills and skills|length > 0 %}
-            <h2 class="section-title mt-40">Competencias</h2>
-            <ul style="padding-left: 20px; margin: 0; font-weight: bold; font-size: 13px;">
+            <h2 class="section-title mt-30">Competencias</h2>
+            <ul class="custom-list">
                 {% for skill in skills %}
-                <li style="margin-bottom: 8px;">{{ skill }}</li>
+                <li>{{ skill }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if diplomas and diplomas|length > 0 %}
+            <h2 class="section-title mt-30">Diplomas</h2>
+            <ul class="custom-list">
+                {% for diploma in diplomas %}
+                <li>{{ diploma }}</li>
                 {% endfor %}
             </ul>
             {% endif %}
@@ -222,8 +289,8 @@
             {% for edu in formacion %}
             <div class="item-block">
                 <div class="item-header">
-                    {{ edu.titulo }}
-                    <span class="item-date">{{ edu.fecha }}</span>
+                    <div class="item-title-container">{{ edu.titulo }}</div>
+                    <div class="item-date-container">{{ edu.fecha }}</div>
                 </div>
                 <div class="item-sub">{{ edu.institucion }}</div>
             </div>
@@ -231,12 +298,12 @@
             {% endif %}
 
             {% if experiencia and experiencia|length > 0 %}
-            <h2 class="section-title mt-40">Experiencia Laboral</h2>
+            <h2 class="section-title mt-30">Experiencia Laboral</h2>
             {% for exp in experiencia %}
             <div class="item-block">
                 <div class="item-header">
-                    {{ exp.cargo }}
-                    <span class="item-date">{{ exp.fecha }}</span>
+                    <div class="item-title-container">{{ exp.cargo }}</div>
+                    <div class="item-date-container">{{ exp.fecha }}</div>
                 </div>
                 <div class="item-sub">{{ exp.empresa }}</div>
                 {% if exp.descripcion %}
