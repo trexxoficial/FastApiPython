@@ -70,7 +70,7 @@
             height: 140px;
             border-radius: 12px;
             object-fit: cover;
-            display: block; /* Evita márgenes fantasma debajo de la imagen */
+            display: block;
         }
 
         .header-right {
@@ -99,13 +99,12 @@
             white-space: pre-wrap;
         }
 
-        /* --- CONTENIDO PRINCIPAL (Sin usar Floats para resistir saltos de página) --- */
+        /* --- CONTENIDO PRINCIPAL --- */
         .content {
             position: relative;
             width: 100%;
         }
         
-        /* La columna izquierda se posiciona absoluto sobre el fondo gris */
         .sidebar {
             position: absolute;
             top: 0;
@@ -114,7 +113,6 @@
             padding: 30px 20px;
         }
         
-        /* La columna principal usa un margen del 35% que sobrevive a los cambios de hoja */
         .main {
             margin-left: 35%; 
             width: 65%;
@@ -123,12 +121,13 @@
 
         /* --- ESTILOS DE SECCIÓN --- */
         .section-title {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 15px;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 16px;
             font-weight: bold;
             text-transform: uppercase;
-            border-top: 2px solid #000000;
-            border-bottom: 2px solid #000000;
+            color: #000000;
+            border-top: 2px solid var(--tema-color, #0e6878);
+            border-bottom: 2px solid var(--tema-color, #0e6878);
             padding: 5px 0;
             margin-top: 0;
             margin-bottom: 15px;
@@ -169,42 +168,53 @@
             page-break-inside: avoid;
         }
         
-        /* Sistema de celdas estricto para evitar superposición de título y fecha */
         .item-header {
             display: table;
             width: 100%;
-            margin-bottom: 4px;
-            table-layout: fixed; /* Fuerza a respetar los porcentajes */
+            margin-bottom: 2px;
+            table-layout: fixed;
         }
+        
+        /* Títulos de cargo (Negro, Serif, Fuerte) */
         .item-title {
             display: table-cell;
-            width: 75%; /* Máximo espacio para el cargo */
+            width: 75%;
+            font-family: 'Georgia', 'Times New Roman', serif;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 15px;
+            color: #000000;
             vertical-align: top;
             padding-right: 15px;
         }
+        
         .item-date {
             display: table-cell;
-            width: 25%; /* Espacio protegido para la fecha */
+            width: 25%;
             font-weight: bold;
             font-size: 13px;
             text-align: right;
             vertical-align: top;
-            white-space: nowrap; /* Evita que la fecha baje de línea */
+            white-space: nowrap;
         }
         
+        /* Empresa destacada con el color del tema */
         .item-company {
+            font-family: 'Georgia', 'Times New Roman', serif;
             font-weight: bold;
-            font-size: 13.5px;
-            color: #333;
-            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--tema-color, #0e6878);
+            margin-bottom: 8px;
         }
+        
+        /* Descripciones en cursiva */
         .item-desc {
+            font-family: 'Georgia', 'Times New Roman', serif;
             font-size: 13px;
+            font-style: italic;
             text-align: justify;
             line-height: 1.5;
             white-space: pre-wrap;
+            color: #222222;
         }
     </style>
 </head>
