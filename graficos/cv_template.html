@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Hoja de Vida</title>
     <style>
+        /* --- CONFIGURACIÓN BASE --- */
         @page {
             size: A4;
             margin: 0;
@@ -16,78 +17,74 @@
             color: #000000;
             font-size: 13px;
             line-height: 1.5;
-            background-color: #ffffff; /* Fondo base blanco */
+            /* Fondo continuo para múltiples páginas */
+            background-image: linear-gradient(90deg, #c9d6db 35%, #ffffff 35%);
         }
-
-        /* --- FONDO DE LA COLUMNA IZQUIERDA (Infinito en todas las páginas) --- */
-        .sidebar-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 35%;
-            background-color: #c9d6db;
-            z-index: -1; /* Se mantiene detrás de todo el contenido */
-        }
-
-        /* --- CABECERA (Sistema de celdas para altura perfecta) --- */
-        .top-section {
+        
+        /* Clase vital para evitar que los elementos floten fuera de lugar */
+        .clearfix::after {
+            content: "";
             display: table;
-            width: 100%;
-            table-layout: fixed;
+            clear: both;
         }
-        .top-left {
-            display: table-cell;
+        * {
+            box-sizing: border-box;
+        }
+
+        /* --- CABECERA --- */
+        .header {
+            width: 100%;
+        }
+        .header-left {
             width: 35%;
+            float: left;
             background-color: #000000;
             position: relative;
             text-align: center;
-            vertical-align: middle; /* Centra la foto verticalmente */
-            padding: 40px 0;
+            padding: 50px 0;
         }
         
-        /* Triángulo Blanco (Esquina superior izquierda) */
-        .top-left::before {
+        /* Triángulos decorativos corregidos */
+        .header-left::before {
             content: "";
             position: absolute;
             top: 0;
             left: 0;
-            border-top: 60px solid #ffffff;
-            border-right: 60px solid transparent;
+            border-top: 50px solid #ffffff;
+            border-right: 50px solid transparent;
         }
-        /* Triángulo Gris (Esquina inferior derecha conectando con la barra gris) */
-        .top-left::after {
+        .header-left::after {
             content: "";
             position: absolute;
             bottom: 0;
             right: 0;
-            border-bottom: 60px solid #c9d6db;
-            border-left: 60px solid transparent;
+            border-bottom: 50px solid #c9d6db;
+            border-left: 50px solid transparent;
         }
 
+        /* Marco de la foto corregido (sin espacios extra) */
         .photo-frame {
-            position: relative;
-            z-index: 10;
             display: inline-block;
             background-color: #ffffff;
             padding: 4px;
-            border-radius: 18px; /* Borde exterior redondeado */
+            border-radius: 16px;
+            position: relative;
+            z-index: 10;
         }
-        .profile-img {
+        .photo-frame img {
             width: 140px;
             height: 140px;
-            border-radius: 14px; /* Borde interior de la foto */
+            border-radius: 12px;
             object-fit: cover;
-            display: block;
+            display: block; /* Elimina el margen inferior fantasma */
         }
 
-        .top-right {
-            display: table-cell;
+        .header-right {
             width: 65%;
+            float: left;
             background-color: var(--tema-color, #0e6878);
             padding: 40px;
             color: #ffffff;
-            vertical-align: middle;
         }
         .name {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -108,30 +105,21 @@
         }
 
         /* --- CONTENIDO PRINCIPAL --- */
-        .content-wrapper {
-            position: relative;
+        .content {
             width: 100%;
         }
-        
-        /* Se ancla sobre el fondo gris de forma absoluta en la primera página */
-        .sidebar-content {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .sidebar {
             width: 35%;
-            padding: 30px 25px;
-            box-sizing: border-box;
+            float: left;
+            padding: 30px 20px;
         }
-
-        /* Se empuja hacia la derecha. Nunca se descuadrará en saltos de página */
-        .main-content {
-            margin-left: 35%; 
+        .main {
             width: 65%;
+            float: left;
             padding: 30px 40px;
-            box-sizing: border-box;
         }
 
-        /* --- TIPOGRAFÍA Y BLOQUES --- */
+        /* --- ESTILOS DE SECCIÓN --- */
         .section-title {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             font-size: 15px;
@@ -164,7 +152,6 @@
             color: #222;
         }
 
-        /* Listas de Competencias y Diplomas */
         ul.custom-list {
             padding-left: 15px;
             margin: 0;
@@ -172,43 +159,41 @@
             font-weight: bold;
             color: #222;
         }
-        ul.custom-list li {
-            margin-bottom: 6px;
-        }
+        ul.custom-list li { margin-bottom: 6px; }
 
-        /* Bloques de Experiencia/Formación */
+        /* --- BLOQUES DE EXPERIENCIA/FORMACIÓN (CORREGIDOS) --- */
         .item-block {
             margin-bottom: 25px;
-            page-break-inside: avoid;
+            page-break-inside: avoid; /* Previene cortes entre páginas */
         }
         
-        /* Sistema de Flotación seguro para Título y Fecha */
         .item-header {
+            display: table;
             width: 100%;
             margin-bottom: 4px;
-            overflow: hidden; /* Clearfix */
         }
         .item-title {
-            float: left;
-            width: 70%;
+            display: table-cell;
             font-weight: bold;
             font-size: 14px;
+            vertical-align: top;
+            padding-right: 15px;
         }
         .item-date {
-            float: right;
-            width: 30%;
+            display: table-cell;
             font-weight: bold;
             font-size: 13px;
             text-align: right;
+            vertical-align: top;
+            white-space: nowrap; /* Impide que la fecha se divida en dos líneas */
+            width: 130px; /* Ancho fijo para proteger el espacio de la fecha */
         }
         
         .item-company {
-            clear: both; /* Asegura que baje del título/fecha */
             font-weight: bold;
             font-size: 13.5px;
             color: #333;
             margin-bottom: 5px;
-            padding-top: 4px;
         }
         .item-desc {
             font-size: 13px;
@@ -220,29 +205,26 @@
 </head>
 <body style="--tema-color: {{ color_tema }};">
 
-    <!-- COLUMNA GRIS INFINITA -->
-    <div class="sidebar-bg"></div>
-
-    <!-- CABECERA DE PERFIL -->
-    <div class="top-section">
-        <div class="top-left">
+    <!-- CABECERA -->
+    <div class="header clearfix">
+        <div class="header-left">
             {% if foto_base64 %}
             <div class="photo-frame">
-                <img class="profile-img" src="{{ foto_base64 }}" alt="Foto de perfil">
+                <img src="{{ foto_base64 }}" alt="Foto">
             </div>
             {% endif %}
         </div>
-        <div class="top-right">
+        <div class="header-right">
             <h1 class="name">{{ personal.nombre }}</h1>
             <div class="profile-text">{{ personal.perfil }}</div>
         </div>
     </div>
 
-    <!-- CONTENIDO GENERAL -->
-    <div class="content-wrapper">
+    <!-- CONTENIDO -->
+    <div class="content clearfix">
         
-        <!-- COLUMNA LATERAL IZQUIERDA -->
-        <div class="sidebar-content">
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="sidebar">
             <h2 class="section-title">Contacto</h2>
             <div class="contact-item">
                 <span class="contact-icon">📍</span>
@@ -292,8 +274,8 @@
             {% endif %}
         </div>
 
-        <!-- COLUMNA PRINCIPAL DERECHA -->
-        <div class="main-content">
+        <!-- COLUMNA DERECHA -->
+        <div class="main">
             {% if formacion and formacion|length > 0 %}
             <h2 class="section-title">Formación</h2>
             {% for edu in formacion %}
