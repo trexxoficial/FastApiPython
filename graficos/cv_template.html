@@ -16,167 +16,173 @@
             font-size: 12px;
             line-height: 1.4;
         }
-        /* Contenedor principal usando floats para máxima compatibilidad con WeasyPrint */
         .resume-container {
             width: 100%;
-            height: 100%;
         }
+        /* Columna Izquierda */
         .left-column {
             width: 35%;
             float: left;
-            background-color: #f8f9fa;
-            padding: 30px;
-            box-sizing: border-box;
-            min-height: 100vh;
+            background-color: #c9d6db;
+            min-height: 1050px; /* Asegura cobertura en la primera página */
         }
+        .photo-container {
+            background-color: #000000;
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 80px solid solid transparent;
+        }
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 15px;
+            object-fit: cover;
+            border: 3px solid #fff;
+        }
+        .left-content {
+            padding: 20px 30px;
+        }
+        .left-content .section-title {
+            color: #000;
+            border-bottom: 2px solid #000;
+        }
+
+        /* Columna Derecha */
         .right-column {
             width: 65%;
             float: left;
-            padding: 30px 40px;
+            background-color: #fff;
+        }
+        .header-right {
+            background-color: var(--tema-color);
+            color: #fff;
+            padding: 40px;
+            min-height: 170px;
             box-sizing: border-box;
         }
-        /* Estilos de la Foto */
-        .profile-img-container {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .profile-img {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--tema-color);
-        }
-        /* Títulos */
         .name {
             font-size: 28px;
             font-weight: bold;
-            color: #222;
-            text-transform: uppercase;
-            margin-top: 0;
-            margin-bottom: 15px;
+            margin: 0 0 10px 0;
+            border-bottom: 3px solid #fff;
+            padding-bottom: 15px;
         }
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            color: var(--tema-color);
-            border-bottom: 1px solid var(--tema-color);
-            padding-bottom: 3px;
-        }
-        /* Listas y texto */
-        .info-text {
-            margin-bottom: 8px;
-            word-wrap: break-word;
-        }
-        .item-title {
-            font-weight: bold;
+        .profile-text {
+            margin-top: 15px;
             font-size: 13px;
-            margin-bottom: 2px;
-            color: #222;
-        }
-        .item-subtitle {
-            font-style: italic;
-            color: #555;
-            margin-bottom: 5px;
-        }
-        .item-date {
-            color: var(--tema-color);
-            font-weight: bold;
-            font-size: 11px;
-        }
-        .item-desc {
-            margin-bottom: 15px;
+            line-height: 1.5;
             text-align: justify;
         }
-        ul.skills-list {
-            list-style-type: none;
-            padding-left: 0;
-            margin: 0;
+        .right-content {
+            padding: 30px 40px;
         }
-        ul.skills-list li {
-            margin-bottom: 5px;
-        }
-        ul.skills-list li::before {
-            content: "• ";
-            color: var(--tema-color);
+
+        /* Estilos Generales de Secciones */
+        .section-title {
+            font-size: 16px;
             font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #000;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
         }
-        .clearfix::after {
-            content: "";
-            clear: both;
+        .info-text {
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        .icon-text {
             display: table;
+            width: 100%;
+            margin-bottom: 8px;
         }
+        .icon-text strong {
+            display: table-cell;
+            width: 25px;
+            font-size: 14px;
+        }
+        .icon-text span {
+            display: table-cell;
+        }
+        
+        .item-desc { margin-bottom: 15px; text-align: justify; }
+        .item-title { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #222; }
+        .item-subtitle { font-style: italic; color: #555; margin-bottom: 5px; }
+        .item-date { float: right; font-weight: bold; font-size: 11px; }
+        
+        ul.skills-list { list-style-type: none; padding-left: 0; margin: 0; }
+        ul.skills-list li { margin-bottom: 5px; }
+        ul.skills-list li::before { content: "• "; color: #000; font-weight: bold; }
+        
+        .clearfix::after { content: ""; clear: both; display: table; }
     </style>
 </head>
-<body style="--tema-color: var(--tema-color);">
+<body style="--tema-color: {{ color_tema }};">
     <div class="resume-container clearfix">
         
         <!-- COLUMNA IZQUIERDA -->
         <div class="left-column">
-            
-            {% if foto_base64 %}
-            <div class="profile-img-container">
-                <img class="profile-img" src="data:image/jpeg;base64,{{ foto_base64 }}" alt="Foto de perfil">
+            <div class="photo-container">
+                {% if foto_base64 %}
+                <img class="profile-img" src="{{ foto_base64 }}" alt="Foto de perfil">
+                {% endif %}
             </div>
-            {% endif %}
 
-            <div class="section-title">Contacto</div>
-            <div class="info-text"><strong>Dirección:</strong><br>{{ personal.direccion }}</div>
-            <div class="info-text"><strong>Teléfono:</strong><br>{{ personal.telefono }}</div>
-            <div class="info-text"><strong>Email:</strong><br>{{ personal.email }}</div>
-            
-            <div class="section-title">Datos Personales</div>
-            <div class="info-text"><strong>Cédula:</strong> {{ personal.cedula }}</div>
-            <div class="info-text"><strong>Edad:</strong> {{ personal.edad }} años</div>
-            <div class="info-text"><strong>Lugar de Nac.:</strong> {{ personal.lugarNacimiento }}</div>
-            <div class="info-text"><strong>Estado Civil:</strong> {{ personal.estadoCivil }}</div>
+            <div class="left-content">
+                <div class="section-title">Contacto</div>
+                <div class="icon-text"><strong>📍</strong><span>{{ personal.direccion }}</span></div>
+                <div class="icon-text"><strong>📞</strong><span>{{ personal.telefono }}</span></div>
+                <div class="icon-text"><strong>📧</strong><span>{{ personal.email }}</span></div>
+                <div class="icon-text"><strong>🎂</strong><span>{{ personal.edad }} años</span></div>
+                <div class="icon-text"><strong>📌</strong><span>{{ personal.lugarNacimiento }}</span></div>
+                <div class="icon-text"><strong>🆔</strong><span>C.C: {{ personal.cedula }}</span></div>
+                <div class="icon-text"><strong>💍</strong><span>{{ personal.estadoCivil }}</span></div>
 
-            {% if formacion|length > 0 %}
-            <div class="section-title">Formación</div>
-            {% for edu in formacion %}
-            <div class="item-desc">
-                <div class="item-title">{{ edu.titulo }}</div>
-                <div class="item-subtitle">{{ edu.institucion }}</div>
-                <div class="item-date">{{ edu.fecha }}</div>
+                {% if skills|length > 0 %}
+                <div class="section-title" style="margin-top: 30px;">Competencias</div>
+                <ul class="skills-list">
+                    {% for skill in skills %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
             </div>
-            {% endfor %}
-            {% endif %}
-
-            {% if skills|length > 0 %}
-            <div class="section-title">Competencias</div>
-            <ul class="skills-list">
-                {% for skill in skills %}
-                <li>{{ skill }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-
         </div>
 
         <!-- COLUMNA DERECHA -->
         <div class="right-column">
-            
-            <h1 class="name">{{ personal.nombre }}</h1>
-            
-            <div class="item-desc">
-                {{ personal.perfil }}
+            <div class="header-right">
+                <h1 class="name">{{ personal.nombre }}</h1>
+                <div class="profile-text">
+                    {{ personal.perfil }}
+                </div>
             </div>
+            
+            <div class="right-content">
+                {% if formacion|length > 0 %}
+                <div class="section-title">Formación</div>
+                {% for edu in formacion %}
+                <div class="item-desc">
+                    <div class="item-title">{{ edu.titulo }} <span class="item-date">{{ edu.fecha }}</span></div>
+                    <div class="item-subtitle">{{ edu.institucion }}</div>
+                </div>
+                {% endfor %}
+                {% endif %}
 
-            {% if experiencia|length > 0 %}
-            <div class="section-title">Experiencia Laboral</div>
-            {% for exp in experiencia %}
-            <div class="item-desc">
-                <div class="item-title">{{ exp.cargo }}</div>
-                <div class="item-subtitle">{{ exp.empresa }} | <span class="item-date">{{ exp.fecha }}</span></div>
-                <div>{{ exp.descripcion }}</div>
+                {% if experiencia|length > 0 %}
+                <div class="section-title" style="margin-top: 25px;">Experiencia Laboral</div>
+                {% for exp in experiencia %}
+                <div class="item-desc">
+                    <div class="item-title">{{ exp.cargo }} <span class="item-date">{{ exp.fecha }}</span></div>
+                    <div class="item-subtitle">{{ exp.empresa }}</div>
+                    <div>{{ exp.descripcion }}</div>
+                </div>
+                {% endfor %}
+                {% endif %}
             </div>
-            {% endfor %}
-            {% endif %}
-            
         </div>
+
     </div>
 </body>
 </html>
