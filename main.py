@@ -10,6 +10,7 @@ from fastapi.middleware.wsgi import WSGIMiddleware
 from flask import Flask 
 import json
 import traceback
+from urllib.parse import quote
 
 import pandas as pd
 import plotly.express as px
@@ -155,21 +156,25 @@ async def generar_recibo_endpoint(data: DatosContrato):
         # Invocamos la lógica del otro archivo
         archivo_stream = procesar_recibo(data)
 
-        # Definimos el nombre del archivo
-        nombre_archivo = f"Recibo_{data.proveedor.replace(' ', '_')}_Cuota{data.numero_cuota}.docx"
+        # 1. Definimos el nombre del archivo
+        nombre_base = f"Recibo_{data.proveedor.replace(' ', '_')}_Cuota{data.numero_cuota}.docx"
         
-        # Devolvemos el archivo Word
+        # 2. Codificamos el nombre para que los acentos (á, é, ñ) no rompan el header HTTP
+        nombre_archivo_seguro = quote(nombre_base)
+        
+        # Devolvemos el archivo Word usando el formato seguro filename*=utf-8''
         return StreamingResponse(
             archivo_stream,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": f'attachment; filename="{nombre_archivo}"'}
+            headers={"Content-Disposition": f"attachment; filename*=utf-8''{nombre_archivo_seguro}"}
         )
 
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         print(f"Error generando recibo: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Asegurarnos de enviar el error exacto al frontend
+        raise HTTPException(status_code=500, detail=f"Fallo en el servidor: {str(e)}")
     
 
 
