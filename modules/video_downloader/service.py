@@ -8,6 +8,10 @@ from fastapi.responses import FileResponse
 from fastapi import HTTPException
 import yt_dlp
 
+# Calcula la ruta absoluta hacia la raíz del proyecto donde está cookies.txt
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+COOKIES_PATH = os.path.join(BASE_DIR, "cookies.txt")
+
 # 1. Detección automática del entorno (Railway = Linux, Local = Windows)
 if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_STATIC_URL"):
     FFMPEG_LOCATION = "ffmpeg"
@@ -40,7 +44,7 @@ def get_video_info_service(request: VideoRequest):
         logger.error(f"Error al obtener info del video: {e}")
         raise HTTPException(status_code=400, detail=f"Error al obtener la información: {str(e)}")
 
-        
+
 
 def download_video_service(request: VideoDownloadRequest, background_tasks):
     url_str = str(request.url)
