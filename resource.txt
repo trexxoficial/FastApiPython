@@ -26,6 +26,7 @@ trexxoficialco@gmail.com
 
 
 ******************************-------------- *************************
+pip install -r requirements.txt
 python -m uvicorn main:app --reload
 python -m uvicorn recibo_satisfaccion:app --reload
 
@@ -41,4 +42,11 @@ uvicorn main:app --reload
 
 Script para generar plantilla de cv
 python crear_plantilla.py
+
+
+*********************
+py -m venv fastapi-env
+.\fastapi-env\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m uvicorn main:app --reload --port 8082
 
