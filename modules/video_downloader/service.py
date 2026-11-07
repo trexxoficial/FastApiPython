@@ -58,6 +58,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
     command = [
         sys.executable, "-m", "yt_dlp",
         "--extractor-args", "youtube:player_client=web",
+        "--js-runtimes", "quickjs",
         "--remote-components", "ejs:github",
         "--no-playlist",
         "--cookies", COOKIES_PATH,
