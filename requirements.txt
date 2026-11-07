@@ -14,8 +14,6 @@ weasyprint
 jinja2
 pillow
 unicodedata2
-# torch
-# torchaudio
-# demucs
 ffmpeg-python
 yt-dlp[default]
+quickjs

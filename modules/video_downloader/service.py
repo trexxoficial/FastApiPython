@@ -57,8 +57,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
     # 2. Comando yt-dlp usando la variable dinámica de FFMPEG
     command = [
         sys.executable, "-m", "yt_dlp",
-        "--extractor-args", "youtube:player_client=android,ios,web",
-        "--js-runtimes", "node",
+        "--extractor-args", "youtube:player_client=web",
         "--remote-components", "ejs:github",
         "--no-playlist",
         "--cookies", COOKIES_PATH,
