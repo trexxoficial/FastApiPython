@@ -56,16 +56,16 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
     
     # 2. Comando yt-dlp usando la variable dinámica de FFMPEG
     command = [
-        '/usr/local/bin/python3.11', '-m', 'yt_dlp',
-        '--js-runtimes', '/usr/bin/node', 
-        '--remote-components', 'ejs:github',
-        '--no-playlist',
-        '--cookies', 'cookies.txt',
-        '--ffmpeg-location', '/usr/bin/ffmpeg', # Ruta absoluta en Linux
-        '-f', 'bv+ba/bv/b',
-        '--merge-output-format', 'mp4',
-        '-o', '/tmp/tmpbjioe199.mp4', # Tu variable temporal
-        'https://www.youtube.com/live/LQqv4M_NtNc' # Tu variable de URL
+        sys.executable, "-m", "yt_dlp",
+        "--js-runtimes", "node", # <-- Cambia esto de vuelta a "node"
+        "--remote-components", "ejs:github",
+        "--no-playlist",
+        "--cookies", "cookies.txt",
+        "--ffmpeg-location", "/usr/bin/ffmpeg", # <-- Mantén la ruta absoluta para ffmpeg
+        "-f", f"{request.format_id}+ba/{request.format_id}/b",
+        "--merge-output-format", "mp4",
+        "-o", temp_path,
+        url_str
     ]
 
     try:
