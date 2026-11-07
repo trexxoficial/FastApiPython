@@ -22,7 +22,11 @@ from .schemas import VideoDownloadRequest, VideoRequest
 def get_video_info_service(request: VideoRequest):
     """Obtiene información y formatos del video"""
     url = str(request.url)
-    ydl_opts = {"quiet": True, "no_warnings": True}
+    ydl_opts = {
+        "quiet": True, 
+        "no_warnings": True,
+        "cookiefile": "cookies.txt"  # <--- NUEVO: Inyecta las cookies a la lectura
+    }
     
     # Solo pasa la ubicación si no es la global del sistema
     if FFMPEG_LOCATION != "ffmpeg":
@@ -49,6 +53,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
         "--js-runtimes", "node",
         "--remote-components", "ejs:github",
         "--no-playlist",
+        "--cookies", "cookies.txt",
         "--ffmpeg-location", FFMPEG_LOCATION, # Inyecta la ruta según el SO
         "-f", f"{request.format_id}+bestaudio/best",
         "--merge-output-format", "mp4",
