@@ -25,10 +25,10 @@ def get_video_info_service(request: VideoRequest):
     ydl_opts = {
         "quiet": True, 
         "no_warnings": True,
-        "cookiefile": "cookies.txt"  # <--- NUEVO: Inyecta las cookies a la lectura
+        "cookiefile": COOKIES_PATH,
+        "format": "best"  # <--- AGREGAR ESTO: Evita que falle al leer transmisiones en vivo
     }
     
-    # Solo pasa la ubicación si no es la global del sistema
     if FFMPEG_LOCATION != "ffmpeg":
         ydl_opts["ffmpeg_location"] = FFMPEG_LOCATION
 
@@ -39,6 +39,8 @@ def get_video_info_service(request: VideoRequest):
     except Exception as e:
         logger.error(f"Error al obtener info del video: {e}")
         raise HTTPException(status_code=400, detail=f"Error al obtener la información: {str(e)}")
+
+        
 
 def download_video_service(request: VideoDownloadRequest, background_tasks):
     url_str = str(request.url)
