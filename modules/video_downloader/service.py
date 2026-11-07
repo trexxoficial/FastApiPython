@@ -58,11 +58,13 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
     command = [
         sys.executable, "-m", "yt_dlp",
         "--extractor-args", "youtube:player_client=android,ios,web",
+        "--js-runtimes", "node",
+        "--remote-components", "ejs:github",
         "--no-playlist",
         "--cookies", COOKIES_PATH,
         "--ffmpeg-location", "/usr/bin/ffmpeg",
-        "-f", "bv*+ba/b", # Selecciona el mejor video y mejor audio en CUALQUIER formato
-        "--merge-output-format", "mp4", # FFmpeg los une y convierte a MP4 automáticamente
+        "-f", "bv*+ba/b",
+        "--merge-output-format", "mp4",
         "-o", temp_path,
         url_str
     ]
