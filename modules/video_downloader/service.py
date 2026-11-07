@@ -57,13 +57,12 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
     # 2. Comando yt-dlp usando la variable dinámica de FFMPEG
     command = [
         sys.executable, "-m", "yt_dlp",
-        "--extractor-args", "youtube:client=android,ios", # Evade el bloqueo de IP de YouTube
-        "--js-runtimes", "node",
+        "--extractor-args", "youtube:player_client=android", # Cliente individual muy estable
         "--remote-components", "ejs:github",
         "--no-playlist",
         "--cookies", "cookies.txt",
         "--ffmpeg-location", "/usr/bin/ffmpeg",
-        "-f", f"{request.format_id}+ba/b", # Intenta pistas separadas, si falla, usa la mejor pista unida
+        "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best", # Selectores universales de alta calidad
         "--merge-output-format", "mp4",
         "-o", temp_path,
         url_str
