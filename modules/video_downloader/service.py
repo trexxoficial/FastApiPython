@@ -30,7 +30,7 @@ def get_video_info_service(request: VideoRequest):
         "quiet": True, 
         "no_warnings": True,
         "cookiefile": COOKIES_PATH,
-        "extractor_args": {"youtube": {"client": ["android", "ios"]}}, # RESTAURA ESTA LÍNEA
+        "extractor_args": {"youtube": {"player_client": ["android"]}},
         "ignore_no_formats_error": True  
     }
     
