@@ -1,3 +1,4 @@
+# service.py
 import os
 import sys
 import tempfile
@@ -7,8 +8,11 @@ from fastapi.responses import FileResponse
 from fastapi import HTTPException
 import yt_dlp
 
-
-FFMPEG_LOCATION = "./ffmpeg.exe"
+# 1. Detección automática del entorno (Railway = Linux, Local = Windows)
+if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_STATIC_URL"):
+    FFMPEG_LOCATION = "ffmpeg"
+else:
+    FFMPEG_LOCATION = "ffmpeg.exe" # En local asume que está en la raíz junto a main.py
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("video_downloader")
@@ -19,7 +23,9 @@ def get_video_info_service(request: VideoRequest):
     """Obtiene información y formatos del video"""
     url = str(request.url)
     ydl_opts = {"quiet": True, "no_warnings": True}
-    if FFMPEG_LOCATION and FFMPEG_LOCATION != "ffmpeg":
+    
+    # Solo pasa la ubicación si no es la global del sistema
+    if FFMPEG_LOCATION != "ffmpeg":
         ydl_opts["ffmpeg_location"] = FFMPEG_LOCATION
 
     try:
@@ -33,17 +39,17 @@ def get_video_info_service(request: VideoRequest):
 def download_video_service(request: VideoDownloadRequest, background_tasks):
     url_str = str(request.url)
     
-    # 1. Crea un archivo temporal seguro
+    # Crea un archivo temporal seguro
     fd, temp_path = tempfile.mkstemp(suffix=".mp4")
     os.close(fd) 
     
-    # 2. Comando yt-dlp con motor JS y componentes remotos
+    # 2. Comando yt-dlp usando la variable dinámica de FFMPEG
     command = [
         sys.executable, "-m", "yt_dlp",
         "--js-runtimes", "node",
         "--remote-components", "ejs:github",
-        "--no-playlist",  # Bloquea la descarga de listas de reproducción completas
-        "--ffmpeg-location", "./ffmpeg.exe", # Apunta al archivo local que descargaremos
+        "--no-playlist",
+        "--ffmpeg-location", FFMPEG_LOCATION, # Inyecta la ruta según el SO
         "-f", f"{request.format_id}+bestaudio/best",
         "--merge-output-format", "mp4",
         "-o", temp_path,
@@ -53,7 +59,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
     try:
         subprocess.run(command, check=True)
         
-        # Validación crítica: Verificar que yt-dlp no haya fallado silenciosamente dejando un archivo vacío
+        # Validación crítica
         if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
             raise Exception("yt-dlp generó un archivo vacío (posible bloqueo de YouTube).")
             
@@ -65,7 +71,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
 
     print(f"Éxito: Archivo temporal de video generado en: {temp_path}")
 
-    # 3. Limpieza segura
+    # Limpieza segura
     def cleanup_file(path: str):
         try:
             if os.path.exists(path):
@@ -74,10 +80,10 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
         except Exception as e:
             logger.error(f"Error al intentar borrar el archivo temporal: {e}")
 
-    # 4. Programar borrado automático tras enviar la respuesta
+    # Programar borrado automático tras enviar la respuesta
     background_tasks.add_task(cleanup_file, temp_path)
 
-    # 5. FileResponse con cabeceras estrictas para forzar la descarga en clientes HTTP
+    # FileResponse con cabeceras estrictas
     return FileResponse(
         path=temp_path,
         media_type="video/mp4",

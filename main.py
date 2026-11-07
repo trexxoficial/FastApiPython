@@ -258,23 +258,63 @@ async def variables():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-# 3. Raíz
+# 3. Raíz (Landing Page para Railway)
 @app.get("/", response_class=HTMLResponse)
 async def root():
-     return """
-     <html>
-        <head><title>API UMAYOR</title></head>
-        <body style="font-family: Arial; padding: 20px;">
-            <h1>Bienvenido a la API de UMAYOR</h1>
+    return """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>API UMAYOR - Estado del Servidor</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 800px; margin: 50px auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+            h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 15px; margin-top: 0; }
+            .status-badge { display: inline-block; background-color: #2ecc71; color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.9em; font-weight: bold; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3); }
+            .status-badge::before { content: "●"; margin-right: 6px; animation: blink 1.5s infinite; }
+            @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+            ul { list-style: none; padding: 0; margin: 0; }
+            li { margin: 15px 0; background: #fff; border: 1px solid #e1e8ed; padding: 20px; border-left: 5px solid #3498db; border-radius: 6px; transition: transform 0.2s, box-shadow 0.2s; }
+            li:hover { transform: translateX(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+            a { text-decoration: none; color: #2c3e50; font-weight: bold; font-size: 1.2em; display: flex; align-items: center; }
+            a:hover { color: #3498db; }
+            .description { margin-top: 8px; font-size: 0.95em; color: #7f8c8d; }
+            .method { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.75em; font-weight: bold; color: white; margin-right: 12px; letter-spacing: 0.5px; }
+            .get { background-color: #61affe; }
+            .post { background-color: #49cc90; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 Servidor API UMAYOR</h1>
+            <div class="status-badge">Sistema en línea (Railway)</div>
+            
+            <p style="color: #555; margin-bottom: 25px; font-size: 1.1em;">El backend está funcionando correctamente. Selecciona un entorno para comenzar a probar:</p>
+            
             <ul>
-                <li><a href="/dashboard1/">📊 Ver Dashboard de Violencia</a></li>
-                <li><a href="/graficaPrueba">📉 Descargar Gráfica PNG</a></li>
-                <li><a href="/docs">📄 Documentación API (Swagger)</a></li>
+                <li>
+                    <a href="/docs"><span class="method get">GET</span> Documentación Interactiva (Swagger UI)</a>
+                    <div class="description">Entorno visual principal. Aquí puedes probar los endpoints de generar CV, recibos, videos y resoluciones con botones reales.</div>
+                </li>
+                <li>
+                    <a href="/dashboard1/"><span class="method get">GET</span> Dashboard de Violencia (Dash)</a>
+                    <div class="description">Accede al tablero interactivo de datos montado sobre la API.</div>
+                </li>
+                <li>
+                    <a href="/graficaPrueba"><span class="method get">GET</span> Generador de Gráfica de Prueba</a>
+                    <div class="description">Genera y descarga dinámicamente un gráfico en formato PNG.</div>
+                </li>
+                <li>
+                    <a href="/descargar-plantilla-resolucion-excel"><span class="method get">GET</span> Descargar Plantilla Excel</a>
+                    <div class="description">Descarga el archivo base .xlsm (macros) para la carga de resoluciones.</div>
+                </li>
             </ul>
-            <p><i>Endpoint disponible: POST /generar-recibo (Usar desde Excel)</i></p>
-        </body>
-     </html>
-     """
+        </div>
+    </body>
+    </html>
+    """
 
 
 # Definimos el modelo de datos para validación (opcional pero recomendado)
