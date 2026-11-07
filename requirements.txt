@@ -18,4 +18,4 @@ unicodedata2
 # torchaudio
 # demucs
 ffmpeg-python
-yt-dlp
+yt-dlp[default]
