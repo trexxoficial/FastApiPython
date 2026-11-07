@@ -42,3 +42,10 @@ uvicorn main:app --reload
 Script para generar plantilla de cv
 python crear_plantilla.py
 
+
+*********************
+py -m venv fastapi-env
+.\fastapi-env\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m uvicorn main:app --reload --port 8082
+

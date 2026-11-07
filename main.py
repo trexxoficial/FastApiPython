@@ -29,7 +29,12 @@ from cv_generator import crear_docx_cv
 import weasyprint
 from jinja2 import Environment, FileSystemLoader
 
+from modules.video_downloader.router import router as video_downloader_router
+
 app = FastAPI()
+
+# REGISTRO DE RUTAS
+app.include_router(video_downloader_router)
 
 origins = [
     "http://localhost:4200",    # Puerto por defecto de Angular
