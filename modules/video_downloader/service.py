@@ -30,7 +30,8 @@ def get_video_info_service(request: VideoRequest):
         "quiet": True, 
         "no_warnings": True,
         "cookiefile": COOKIES_PATH,
-        "format": "best"  # <--- AGREGAR ESTO: Evita que falle al leer transmisiones en vivo
+        "format": "best",
+        "extractor_args": {"youtube": {"client": ["android", "ios"]}}
     }
     
     if FFMPEG_LOCATION != "ffmpeg":
