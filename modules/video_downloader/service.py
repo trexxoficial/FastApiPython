@@ -55,7 +55,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
         "--no-playlist",
         "--cookies", "cookies.txt",
         "--ffmpeg-location", FFMPEG_LOCATION, # Inyecta la ruta según el SO
-        "-f", f"{request.format_id}+bestaudio/best",
+        "-f", "bestvideo+bestaudio/best",
         "--merge-output-format", "mp4",
         "-o", temp_path,
         url_str
