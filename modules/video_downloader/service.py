@@ -30,8 +30,8 @@ def get_video_info_service(request: VideoRequest):
         "quiet": True, 
         "no_warnings": True,
         "cookiefile": COOKIES_PATH,
-        "format": "b",
-        "extractor_args": {"youtube": {"client": ["android", "ios"]}}
+        "extractor_args": {"youtube": {"client": ["android", "ios"]}},
+        "ignore_no_formats_error": True  
     }
     
     if FFMPEG_LOCATION != "ffmpeg":
