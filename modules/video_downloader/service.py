@@ -30,7 +30,7 @@ def get_video_info_service(request: VideoRequest):
         "quiet": True, 
         "no_warnings": True,
         "cookiefile": COOKIES_PATH,
-        "format": "best",
+        "format": "b",
         "extractor_args": {"youtube": {"client": ["android", "ios"]}}
     }
     
@@ -62,7 +62,7 @@ def download_video_service(request: VideoDownloadRequest, background_tasks):
         "--no-playlist",
         "--cookies", "cookies.txt",
         "--ffmpeg-location", FFMPEG_LOCATION, # Inyecta la ruta según el SO
-        "-f", "bestvideo+bestaudio/best",
+        "-f", f"{request.format_id}+ba/{request.format_id}/b",
         "--merge-output-format", "mp4",
         "-o", temp_path,
         url_str
