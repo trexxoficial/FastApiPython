@@ -3,6 +3,7 @@ import os
 import shutil
 
 from fastapi import APIRouter, BackgroundTasks
+from fastapi.responses import FileResponse
 
 from modules.video_downloader.schemas import (
     VideoRequest,
@@ -14,8 +15,6 @@ from modules.video_downloader.service import (
     get_video_formats_service,
     download_video_service,
 )
-
-from fastapi.responses import FileResponse
 
 
 router = APIRouter()
@@ -41,13 +40,13 @@ def download_video(
     video_path = result["path"]
     temp_dir = result["temp_dir"]
 
+    filename = os.path.basename(video_path)
+
     background_tasks.add_task(
         shutil.rmtree,
         temp_dir,
         ignore_errors=True
     )
-
-    filename = os.path.basename(video_path)
 
     return FileResponse(
         path=video_path,

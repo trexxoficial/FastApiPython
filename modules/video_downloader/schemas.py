@@ -1,11 +1,26 @@
 
 from typing import Optional
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, Field, validator
 
 
 class VideoRequest(BaseModel):
-    url: HttpUrl
+    url: str
+
+    @validator("url")
+    def validate_url(cls, value):
+        value = value.strip()
+
+        parsed = urlparse(value)
+
+        if (
+            parsed.scheme not in ("http", "https")
+            or not parsed.netloc
+        ):
+            raise ValueError("La URL del video no es válida.")
+
+        return value
 
 
 class VideoFormat(BaseModel):
@@ -38,6 +53,5 @@ class VideoInfoResponse(BaseModel):
     formats: list[VideoFormat] = Field(default_factory=list)
 
 
-class VideoDownloadRequest(BaseModel):
-    url: HttpUrl
+class VideoDownloadRequest(VideoRequest):
     format_id: str
