@@ -262,108 +262,224 @@ def validate_video(video_path: str):
     }
 
 
+
 # ============================================================
-# CONVERSIÓN A H264 + AAC
+# VALIDAR INTEGRIDAD COMPLETA DEL VIDEO
 # ============================================================
 
-def convert_to_compatible_mp4(video_path: str, temp_dir: str):
+def check_video_integrity(video_path: str):
+
+    if not FFMPEG_LOCATION:
+        raise Exception("FFmpeg no está instalado.")
+
+    logger.info(
+        "Iniciando validación integral del video..."
+    )
+
+    command = [
+        FFMPEG_LOCATION,
+        "-hide_banner",
+        "-nostdin",
+        "-v", "error",
+        "-xerror",
+        "-i", video_path,
+        "-map", "0:v:0",
+        "-map", "0:a:0",
+        "-f", "null",
+        "-"
+    ]
+
+    try:
+
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=7200
+        )
+
+        if result.returncode != 0:
+
+            logger.error(
+                "Errores de decodificación: %s",
+                result.stderr[-6000:]
+            )
+
+            raise Exception(
+                "El video contiene errores de decodificación "
+                "o paquetes dañados."
+            )
+
+        logger.info(
+            "Validación integral completada: "
+            "video y audio decodificados correctamente."
+        )
+
+        return True
+
+    except subprocess.TimeoutExpired:
+
+        raise Exception(
+            "Se agotó el tiempo de validación del video."
+        )
+
+
+# ============================================================
+# CONVERSIÓN / REMUX A MP4 COMPATIBLE
+# ============================================================
+
+def convert_to_compatible_mp4(
+    video_path: str,
+    temp_dir: str
+):
 
     validation = validate_video(video_path)
 
     video_codec = validation["video_codec"]
     audio_codec = validation["audio_codec"]
 
-    # Si ya es compatible, evitamos recodificar.
+    final_path = os.path.join(
+        temp_dir,
+        "video_final.mp4"
+    )
+
+    # --------------------------------------------------------
+    # CASO 1: VIDEO H264 + AUDIO AAC
+    # --------------------------------------------------------
+
     if video_codec == "h264" and audio_codec == "aac":
 
         logger.info(
-            "El video ya utiliza H264 + AAC. No requiere recodificación."
+            "El video ya tiene códecs compatibles."
         )
 
-        return video_path
-
-    logger.info(
-        "Convirtiendo video a H264 + AAC para mejorar compatibilidad."
-    )
-
-    if not FFMPEG_LOCATION:
-
-        raise Exception(
-            "FFmpeg es necesario para convertir el video."
+        logger.info(
+            "Realizando remux con faststart..."
         )
 
-    converted_path = os.path.join(
-        temp_dir,
-        "video_compatible.mp4"
-    )
+        command = [
+            FFMPEG_LOCATION,
+            "-y",
+            "-hide_banner",
+            "-nostdin",
+            "-i", video_path,
 
-    command = [
-        FFMPEG_LOCATION,
-        "-y",
-        "-i", video_path,
+            "-map", "0:v:0",
+            "-map", "0:a:0",
 
-        # Video H264
-        "-c:v", "libx264",
-        "-preset", "veryfast",
-        "-crf", "23",
+            "-c", "copy",
 
-        # Audio AAC
-        "-c:a", "aac",
-        "-b:a", "192k",
+            "-movflags", "+faststart",
 
-        # Compatibilidad con reproducción progresiva
-        "-movflags", "+faststart",
+            "-max_muxing_queue_size", "2048",
 
-        converted_path
-    ]
+            final_path
+        ]
+
+    # --------------------------------------------------------
+    # CASO 2: CONVERTIR A H264 + AAC
+    # --------------------------------------------------------
+
+    else:
+
+        logger.info(
+            "Convirtiendo a H264 + AAC."
+        )
+
+        command = [
+            FFMPEG_LOCATION,
+            "-y",
+            "-hide_banner",
+            "-nostdin",
+            "-i", video_path,
+
+            "-map", "0:v:0",
+            "-map", "0:a:0",
+
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-crf", "23",
+
+            "-pix_fmt", "yuv420p",
+
+            "-c:a", "aac",
+            "-b:a", "192k",
+
+            "-movflags", "+faststart",
+
+            final_path
+        ]
+
+    # --------------------------------------------------------
+    # EJECUTAR FFMPEG
+    # --------------------------------------------------------
 
     result = subprocess.run(
         command,
         capture_output=True,
-        text=True
+        text=True,
+        timeout=7200
     )
 
     if result.returncode != 0:
 
         logger.error(
             "Error FFmpeg: %s",
-            result.stderr[-4000:]
+            result.stderr[-6000:]
         )
 
         raise Exception(
-            "No fue posible convertir el video a H264/AAC."
+            "FFmpeg no pudo generar el MP4 final."
         )
 
-    if not os.path.exists(converted_path):
+    if not os.path.exists(final_path):
 
         raise Exception(
-            "FFmpeg no generó el archivo convertido."
+            "No se generó el archivo MP4 final."
         )
 
-    if os.path.getsize(converted_path) == 0:
+    file_size = os.path.getsize(final_path)
+
+    if file_size == 0:
 
         raise Exception(
-            "El archivo convertido está vacío."
-        )
-
-    # Validar nuevamente el resultado
-    final_validation = validate_video(converted_path)
-
-    if (
-        final_validation["video_codec"] != "h264"
-        or final_validation["audio_codec"] != "aac"
-    ):
-
-        raise Exception(
-            "La conversión no produjo los códecs esperados."
+            "El archivo MP4 final está vacío."
         )
 
     logger.info(
-        "Conversión completada correctamente: %s bytes",
-        os.path.getsize(converted_path)
+        "Archivo final generado: %s bytes",
+        file_size
     )
 
-    return converted_path
+    # --------------------------------------------------------
+    # VALIDAR CÓDECS DEL ARCHIVO FINAL
+    # --------------------------------------------------------
+
+    final_validation = validate_video(final_path)
+
+    if final_validation["video_codec"] != "h264":
+
+        raise Exception(
+            "El video final no utiliza H264."
+        )
+
+    if final_validation["audio_codec"] != "aac":
+
+        raise Exception(
+            "El audio final no utiliza AAC."
+        )
+
+    # --------------------------------------------------------
+    # VALIDAR TODO EL CONTENIDO
+    # --------------------------------------------------------
+
+    check_video_integrity(final_path)
+
+    logger.info(
+        "MP4 validado correctamente y listo para entregar."
+    )
+
+    return final_path
 
 
 # ============================================================
