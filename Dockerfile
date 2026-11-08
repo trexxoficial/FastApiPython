@@ -36,6 +36,7 @@ COPY . .
 
 # Verificar herramientas
 RUN deno --version && ffmpeg -version
+RUN ffmpeg -version && ffprobe -version
 
 # Iniciar FastAPI
 CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
