@@ -1,22 +1,56 @@
-from fastapi import APIRouter, BackgroundTasks
-from .schemas import VideoRequest, VideoDownloadRequest
-from .service import get_video_info_service, download_video_service
 
-router = APIRouter(
-    prefix="/api/video",
-    tags=["Video Downloader"]
+import os
+import shutil
+
+from fastapi import APIRouter, BackgroundTasks
+
+from modules.video_downloader.schemas import (
+    VideoRequest,
+    VideoDownloadRequest,
 )
 
+from modules.video_downloader.service import (
+    get_video_info_service,
+    get_video_formats_service,
+    download_video_service,
+)
+
+from fastapi.responses import FileResponse
+
+
+router = APIRouter()
+
+
 @router.post("/info")
-async def get_video_info(request: VideoRequest):
+def get_video_info(request: VideoRequest):
     return get_video_info_service(request)
 
+
 @router.post("/formats")
-async def get_video_formats(request: VideoRequest):
-    info = get_video_info_service(request)
-    return {"formats": info.get("formats", [])}
+def get_video_formats(request: VideoRequest):
+    return get_video_formats_service(request)
+
 
 @router.post("/download")
-async def download_video(request: VideoDownloadRequest, background_tasks: BackgroundTasks):
-    # Pasamos background_tasks al servicio para que pueda programar el borrado
-    return download_video_service(request, background_tasks)
+def download_video(
+    request: VideoDownloadRequest,
+    background_tasks: BackgroundTasks
+):
+    result = download_video_service(request)
+
+    video_path = result["path"]
+    temp_dir = result["temp_dir"]
+
+    background_tasks.add_task(
+        shutil.rmtree,
+        temp_dir,
+        ignore_errors=True
+    )
+
+    filename = os.path.basename(video_path)
+
+    return FileResponse(
+        path=video_path,
+        filename=filename,
+        media_type="video/mp4"
+    )

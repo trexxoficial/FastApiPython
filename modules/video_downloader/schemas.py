@@ -40,8 +40,4 @@ class VideoInfoResponse(BaseModel):
 
 class VideoDownloadRequest(BaseModel):
     url: HttpUrl
-    format_id: str = Field(
-        ...,
-        min_length=1,
-        description="Identificador del formato de video seleccionado"
-    )
+    format_id: str

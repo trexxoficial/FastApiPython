@@ -4,658 +4,313 @@ import glob
 import shutil
 import tempfile
 import logging
-import subprocess
-import json
+
+from pathlib import Path
+from urllib.parse import urlparse
 
 import yt_dlp
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
-from starlette.background import BackgroundTask
 
-from .schemas import VideoDownloadRequest, VideoRequest
+logger = logging.getLogger(__name__)
 
-
-# ============================================================
-# CONFIGURACIÓN
-# ============================================================
-
-logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger("video_downloader")
-
-
-# Directorio raíz del proyecto
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
+COOKIES_PATH = os.getenv(
+    "YOUTUBE_COOKIES_PATH",
+    "/app/cookies.txt"
 )
 
-COOKIES_PATH = os.path.join(BASE_DIR, "cookies.txt")
-
-FFMPEG_LOCATION = shutil.which("ffmpeg")
-FFPROBE_LOCATION = shutil.which("ffprobe")
+FFMPEG_PATH = os.getenv("FFMPEG_LOCATION", "/usr/bin")
 
 
-# ============================================================
-# CONFIGURACIÓN BASE DE YT-DLP
-# ============================================================
+# ---------------------------------------------------------
+# CONFIGURACIÓN BASE
+# ---------------------------------------------------------
 
-def get_base_options():
-
+def get_base_options(use_youtube_cookies: bool = False):
     options = {
-        "quiet": False,
-        "no_warnings": False,
-
-        # Runtime JavaScript para YouTube
-        "js_runtimes": {
-            "deno": {}
-        },
-
-        # Componentes EJS
-        "remote_components": [
-            "ejs:github"
-        ],
-
-        # Evitar descargar listas de reproducción
+        "quiet": True,
+        "no_warnings": True,
         "noplaylist": True,
-
-        # No ignorar errores
-        "ignoreerrors": False,
-
-        # Evitar archivos parciales
-        "continuedl": True,
+        "nocheckcertificate": False,
+        "ffmpeg_location": FFMPEG_PATH,
+        "remote_components": ["ejs:github"],
     }
 
-    # Cookies de YouTube
-    if os.path.exists(COOKIES_PATH):
+    if use_youtube_cookies:
+        if not os.path.isfile(COOKIES_PATH):
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "code": "YOUTUBE_COOKIES_REQUIRED",
+                    "message": "YouTube requiere autenticación, pero no hay cookies configuradas."
+                }
+            )
 
         options["cookiefile"] = COOKIES_PATH
-
-        logger.info("Archivo cookies.txt encontrado")
-
-    else:
-
-        logger.warning(
-            "No se encontró cookies.txt en: %s",
-            COOKIES_PATH
-        )
-
-    # FFmpeg
-    if FFMPEG_LOCATION:
-
-        options["ffmpeg_location"] = FFMPEG_LOCATION
-
-        logger.info("FFmpeg encontrado: %s", FFMPEG_LOCATION)
-
-    else:
-
-        logger.warning("FFmpeg no fue encontrado")
 
     return options
 
 
-# ============================================================
-# INFORMACIÓN DEL VIDEO
-# ============================================================
+# ---------------------------------------------------------
+# DETECCIÓN DE PLATAFORMA
+# ---------------------------------------------------------
 
-def get_video_info_service(request: VideoRequest):
+def is_youtube_url(url: str) -> bool:
+    hostname = (urlparse(url).hostname or "").lower()
+
+    return (
+        hostname == "youtu.be"
+        or hostname == "youtube.com"
+        or hostname.endswith(".youtube.com")
+        or hostname == "youtube-nocookie.com"
+        or hostname.endswith(".youtube-nocookie.com")
+    )
+
+
+def requires_youtube_authentication(error: Exception) -> bool:
+    message = str(error).lower()
+
+    patterns = [
+        "sign in to confirm",
+        "confirm you're not a bot",
+        "confirm you’re not a bot",
+        "not a bot",
+        "login required",
+        "authentication required",
+        "you must be logged in",
+        "requires authentication",
+        "cookies are no longer valid",
+    ]
+
+    return any(pattern in message for pattern in patterns)
+
+
+# ---------------------------------------------------------
+# EJECUCIÓN INTELIGENTE
+# ---------------------------------------------------------
+
+def execute_with_youtube_fallback(url: str, operation):
+    """
+    Ejecuta primero sin cookies.
+    Si YouTube exige autenticación, reintenta con cookies.
+    Las demás plataformas se procesan sin cookies de YouTube.
+    """
+
+    if not is_youtube_url(url):
+        return operation(False), "not_applicable"
+
+    try:
+        result = operation(False)
+        return result, "anonymous"
+
+    except Exception as first_error:
+
+        if not requires_youtube_authentication(first_error):
+            raise
+
+        if not os.path.isfile(COOKIES_PATH):
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "code": "YOUTUBE_COOKIES_REQUIRED",
+                    "message": "Este video requiere iniciar sesión en YouTube. Configura cookies.txt en el servidor."
+                }
+            )
+
+        try:
+            result = operation(True)
+            return result, "cookies"
+
+        except Exception as second_error:
+
+            if requires_youtube_authentication(second_error):
+                raise HTTPException(
+                    status_code=401,
+                    detail={
+                        "code": "YOUTUBE_COOKIES_INVALID",
+                        "message": "YouTube no aceptó las cookies configuradas. Actualiza cookies.txt e inténtalo nuevamente."
+                    }
+                )
+
+            raise second_error
+
+
+# ---------------------------------------------------------
+# INFORMACIÓN DEL VIDEO
+# ---------------------------------------------------------
+
+def get_video_info_service(request):
 
     url = str(request.url)
 
-    ydl_opts = get_base_options()
+    def operation(use_cookies):
 
-    ydl_opts.update({
-        "skip_download": True,
-    })
+        options = get_base_options(use_cookies)
 
-    try:
-
-        logger.info("Consultando información del video: %s", url)
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
-            info = ydl.extract_info(
+        with yt_dlp.YoutubeDL(options) as ydl:
+            return ydl.extract_info(
                 url,
                 download=False
             )
 
-            if not info:
-
-                raise Exception(
-                    "No se pudo obtener información del video."
-                )
-
-            return info
-
-    except Exception as e:
-
-        logger.exception(
-            "Error obteniendo información del video"
+    try:
+        info, auth_mode = execute_with_youtube_fallback(
+            url,
+            operation
         )
+
+        if not info:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "VIDEO_UNAVAILABLE",
+                    "message": "No fue posible obtener información del video."
+                }
+            )
+
+        info["auth_mode"] = auth_mode
+
+        return info
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        logger.exception("Error obteniendo información del video")
 
         raise HTTPException(
             status_code=400,
-            detail=f"Error obteniendo información: {str(e)}"
+            detail={
+                "code": "VIDEO_UNAVAILABLE",
+                "message": str(error)
+            }
         )
 
 
-# ============================================================
-# SELECTOR DE FORMATOS
-# ============================================================
+# ---------------------------------------------------------
+# FORMATOS DISPONIBLES
+# ---------------------------------------------------------
 
-def get_format_selector(format_id: str):
+def get_video_formats_service(request):
 
-    format_id = format_id.strip()
-
-    # Selección automática de mejor calidad compatible
-    if format_id.lower() in ["bv", "best", "auto"]:
-
-        logger.info(
-            "Seleccionando automáticamente formato H264 + AAC"
-        )
-
-        return (
-            "bv*[vcodec^=avc1][ext=mp4]"
-            "+ba[acodec^=mp4a][ext=m4a]"
-            "/b[ext=mp4][vcodec^=avc1][acodec^=mp4a]"
-        )
-
-    # Formato específico solicitado por el usuario.
-    # Primero intenta combinarlo con audio AAC.
-    # Si no es posible, intenta combinarlo con otro audio.
-    # Finalmente, intenta descargar el formato original.
-    logger.info("Formato específico solicitado: %s", format_id)
-
-    return (
-        f"{format_id}+ba[acodec^=mp4a]"
-        f"/{format_id}+ba"
-        f"/{format_id}"
-    )
-
-
-# ============================================================
-# VALIDAR VIDEO CON FFPROBE
-# ============================================================
-
-def validate_video(video_path: str):
-
-    if not FFPROBE_LOCATION:
-
-        raise Exception(
-            "FFprobe no está instalado en el servidor."
-        )
-
-    command = [
-        FFPROBE_LOCATION,
-        "-v", "error",
-        "-show_entries",
-        "format=format_name,duration,size",
-        "-show_entries",
-        "stream=codec_type,codec_name,width,height",
-        "-of", "json",
-        video_path
-    ]
-
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-
-    metadata = json.loads(result.stdout)
-
-    streams = metadata.get("streams", [])
-
-    video_stream = next(
-        (
-            stream for stream in streams
-            if stream.get("codec_type") == "video"
-        ),
-        None
-    )
-
-    audio_stream = next(
-        (
-            stream for stream in streams
-            if stream.get("codec_type") == "audio"
-        ),
-        None
-    )
-
-    if not video_stream:
-
-        raise Exception(
-            "El archivo no contiene una pista de video válida."
-        )
-
-    if not audio_stream:
-
-        raise Exception(
-            "El archivo no contiene una pista de audio válida."
-        )
-
-    video_codec = video_stream.get("codec_name")
-    audio_codec = audio_stream.get("codec_name")
-
-    logger.info("Códec de video: %s", video_codec)
-    logger.info("Códec de audio: %s", audio_codec)
-
-    logger.info(
-        "Duración: %s segundos",
-        metadata.get("format", {}).get("duration")
-    )
-
-    logger.info(
-        "Resolución: %sx%s",
-        video_stream.get("width"),
-        video_stream.get("height")
-    )
+    info = get_video_info_service(request)
 
     return {
-        "metadata": metadata,
-        "video_codec": video_codec,
-        "audio_codec": audio_codec
+        "formats": info.get("formats", []),
+        "auth_mode": info.get("auth_mode", "unknown"),
+        "extractor": info.get("extractor"),
+        "extractor_key": info.get("extractor_key"),
     }
 
 
-
-# ============================================================
-# VALIDAR INTEGRIDAD COMPLETA DEL VIDEO
-# ============================================================
-
-def check_video_integrity(video_path: str):
-
-    if not FFMPEG_LOCATION:
-        raise Exception("FFmpeg no está instalado.")
-
-    logger.info(
-        "Iniciando validación integral del video..."
-    )
-
-    command = [
-        FFMPEG_LOCATION,
-        "-hide_banner",
-        "-nostdin",
-        "-v", "error",
-        "-xerror",
-        "-i", video_path,
-        "-map", "0:v:0",
-        "-map", "0:a:0",
-        "-f", "null",
-        "-"
-    ]
-
-    try:
-
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=7200
-        )
-
-        if result.returncode != 0:
-
-            logger.error(
-                "Errores de decodificación: %s",
-                result.stderr[-6000:]
-            )
-
-            raise Exception(
-                "El video contiene errores de decodificación "
-                "o paquetes dañados."
-            )
-
-        logger.info(
-            "Validación integral completada: "
-            "video y audio decodificados correctamente."
-        )
-
-        return True
-
-    except subprocess.TimeoutExpired:
-
-        raise Exception(
-            "Se agotó el tiempo de validación del video."
-        )
-
-
-# ============================================================
-# CONVERSIÓN / REMUX A MP4 COMPATIBLE
-# ============================================================
-
-def convert_to_compatible_mp4(
-    video_path: str,
-    temp_dir: str
-):
-
-    validation = validate_video(video_path)
-
-    video_codec = validation["video_codec"]
-    audio_codec = validation["audio_codec"]
-
-    final_path = os.path.join(
-        temp_dir,
-        "video_final.mp4"
-    )
-
-    # --------------------------------------------------------
-    # CASO 1: VIDEO H264 + AUDIO AAC
-    # --------------------------------------------------------
-
-    if video_codec == "h264" and audio_codec == "aac":
-
-        logger.info(
-            "El video ya tiene códecs compatibles."
-        )
-
-        logger.info(
-            "Realizando remux con faststart..."
-        )
-
-        command = [
-            FFMPEG_LOCATION,
-            "-y",
-            "-hide_banner",
-            "-nostdin",
-            "-i", video_path,
-
-            "-map", "0:v:0",
-            "-map", "0:a:0",
-
-            "-c", "copy",
-
-            "-movflags", "+faststart",
-
-            "-max_muxing_queue_size", "2048",
-
-            final_path
-        ]
-
-    # --------------------------------------------------------
-    # CASO 2: CONVERTIR A H264 + AAC
-    # --------------------------------------------------------
-
-    else:
-
-        logger.info(
-            "Convirtiendo a H264 + AAC."
-        )
-
-        command = [
-            FFMPEG_LOCATION,
-            "-y",
-            "-hide_banner",
-            "-nostdin",
-            "-i", video_path,
-
-            "-map", "0:v:0",
-            "-map", "0:a:0",
-
-            "-c:v", "libx264",
-            "-preset", "veryfast",
-            "-crf", "23",
-
-            "-pix_fmt", "yuv420p",
-
-            "-c:a", "aac",
-            "-b:a", "192k",
-
-            "-movflags", "+faststart",
-
-            final_path
-        ]
-
-    # --------------------------------------------------------
-    # EJECUTAR FFMPEG
-    # --------------------------------------------------------
-
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        timeout=7200
-    )
-
-    if result.returncode != 0:
-
-        logger.error(
-            "Error FFmpeg: %s",
-            result.stderr[-6000:]
-        )
-
-        raise Exception(
-            "FFmpeg no pudo generar el MP4 final."
-        )
-
-    if not os.path.exists(final_path):
-
-        raise Exception(
-            "No se generó el archivo MP4 final."
-        )
-
-    file_size = os.path.getsize(final_path)
-
-    if file_size == 0:
-
-        raise Exception(
-            "El archivo MP4 final está vacío."
-        )
-
-    logger.info(
-        "Archivo final generado: %s bytes",
-        file_size
-    )
-
-    # --------------------------------------------------------
-    # VALIDAR CÓDECS DEL ARCHIVO FINAL
-    # --------------------------------------------------------
-
-    final_validation = validate_video(final_path)
-
-    if final_validation["video_codec"] != "h264":
-
-        raise Exception(
-            "El video final no utiliza H264."
-        )
-
-    if final_validation["audio_codec"] != "aac":
-
-        raise Exception(
-            "El audio final no utiliza AAC."
-        )
-
-    # --------------------------------------------------------
-    # VALIDAR TODO EL CONTENIDO
-    # --------------------------------------------------------
-
-    check_video_integrity(final_path)
-
-    logger.info(
-        "MP4 validado correctamente y listo para entregar."
-    )
-
-    return final_path
-
-
-# ============================================================
-# DESCARGAR VIDEO
-# ============================================================
-
-def download_video_service(
-    request: VideoDownloadRequest,
-    background_tasks
-):
+# ---------------------------------------------------------
+# DESCARGA DEL VIDEO
+# ---------------------------------------------------------
+
+def download_video_service(request):
 
     url = str(request.url)
+    format_id = request.format_id
 
-    format_id = request.format_id.strip()
+    temp_dir = tempfile.mkdtemp(prefix="video_download_")
 
-    # Crear directorio temporal
-    temp_dir = tempfile.mkdtemp(
-        prefix="video_"
-    )
+    def perform_download(use_cookies):
 
-    output_template = os.path.join(
-        temp_dir,
-        "video.%(ext)s"
-    )
+        attempt_name = (
+            "authenticated" if use_cookies else "anonymous"
+        )
 
-    format_selector = get_format_selector(format_id)
+        attempt_dir = os.path.join(temp_dir, attempt_name)
+        os.makedirs(attempt_dir, exist_ok=True)
 
-    ydl_opts = get_base_options()
+        output_template = os.path.join(
+            attempt_dir,
+            "video.%(ext)s"
+        )
 
-    ydl_opts.update({
+        options = get_base_options(use_cookies)
 
-        "format": format_selector,
+        options.update({
+            "format": format_id,
+            "outtmpl": output_template,
+            "merge_output_format": "mp4",
+            "postprocessors": [
+                {
+                    "key": "FFmpegVideoRemuxer",
+                    "preferedformat": "mp4"
+                }
+            ],
+        })
 
-        "outtmpl": output_template,
+        with yt_dlp.YoutubeDL(options) as ydl:
+            ydl.download([url])
 
-        # Contenedor MP4 para combinar audio y video
-        "merge_output_format": "mp4",
+        files = glob.glob(
+            os.path.join(attempt_dir, "video.*")
+        )
 
-        # Remux cuando sea necesario
-        "postprocessors": [
-            {
-                "key": "FFmpegVideoRemuxer",
-                "preferedformat": "mp4",
-            }
-        ],
+        files = [
+            file for file in files
+            if not file.endswith((".part", ".ytdl"))
+        ]
 
-    })
+        if not files:
+            raise Exception(
+                "yt-dlp no generó el archivo de video."
+            )
+
+        # Preferir MP4 si existe
+        mp4_files = [
+            file for file in files
+            if file.lower().endswith(".mp4")
+        ]
+
+        candidates = mp4_files if mp4_files else files
+
+        return max(
+            candidates,
+            key=os.path.getsize
+        )
 
     try:
 
-        logger.info("=" * 50)
-
-        logger.info(
-            "Iniciando descarga: %s",
-            url
+        video_path, auth_mode = execute_with_youtube_fallback(
+            url,
+            perform_download
         )
 
-        logger.info(
-            "Formato solicitado: %s",
-            format_selector
-        )
-
-        logger.info(
-            "Directorio temporal: %s",
-            temp_dir
-        )
-
-        # Descargar video
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
-            ydl.download([url])
-
-        # Buscar archivos MP4 generados
-        generated_files = glob.glob(
-            os.path.join(temp_dir, "*.mp4")
-        )
-
-        # Excluir archivos auxiliares
-        generated_files = [
-            path for path in generated_files
-            if not path.endswith("_compatible.mp4")
-        ]
-
-        if not generated_files:
-
-            generated_files = glob.glob(
-                os.path.join(temp_dir, "video.*")
-            )
-
-        if not generated_files:
-
-            logger.error(
-                "Archivos encontrados: %s",
-                os.listdir(temp_dir)
-            )
-
-            raise Exception(
-                "No se encontró el archivo generado por yt-dlp."
-            )
-
-        # Seleccionar archivo más reciente
-        video_path = max(
-            generated_files,
-            key=os.path.getmtime
-        )
+        if not os.path.isfile(video_path):
+            raise Exception("El archivo descargado no existe.")
 
         if os.path.getsize(video_path) == 0:
-
-            raise Exception(
-                "El archivo descargado está vacío."
-            )
+            raise Exception("El archivo descargado está vacío.")
 
         logger.info(
-            "Descarga completada: %s bytes",
-            os.path.getsize(video_path)
+            "Descarga completada. Modo de autenticación: %s",
+            auth_mode
         )
 
-        # Validar y convertir cuando sea necesario
-        final_video_path = convert_to_compatible_mp4(
-            video_path,
-            temp_dir
-        )
+        return {
+            "path": video_path,
+            "temp_dir": temp_dir,
+            "auth_mode": auth_mode,
+        }
 
-        # Comprobar archivo final
-        if not os.path.exists(final_video_path):
+    except HTTPException:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
 
-            raise Exception(
-                "No se encontró el archivo final."
-            )
+    except Exception as error:
+        logger.exception("Error descargando video")
 
-        logger.info(
-            "Video listo para entregar: %s",
-            final_video_path
-        )
-
-        logger.info("=" * 50)
-
-    except Exception as e:
-
-        # Limpiar archivos en caso de error
-        shutil.rmtree(
-            temp_dir,
-            ignore_errors=True
-        )
-
-        logger.exception(
-            "Error descargando o procesando video"
-        )
-
-        if isinstance(e, HTTPException):
-            raise
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
         raise HTTPException(
-            status_code=500,
-            detail=f"Error al procesar el video: {str(e)}"
+            status_code=400,
+            detail={
+                "code": "DOWNLOAD_FAILED",
+                "message": str(error)
+            }
         )
-
-    # ========================================================
-    # LIMPIEZA DESPUÉS DE ENVIAR EL ARCHIVO
-    # ========================================================
-
-    def cleanup():
-
-        logger.info(
-            "Eliminando archivos temporales: %s",
-            temp_dir
-        )
-
-        shutil.rmtree(
-            temp_dir,
-            ignore_errors=True
-        )
-
-    return FileResponse(
-        path=final_video_path,
-        media_type="video/mp4",
-        filename="video_descargado.mp4",
-        background=BackgroundTask(cleanup)
-    )
