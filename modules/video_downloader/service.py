@@ -1,105 +1,192 @@
-# service.py
+
 import os
-import sys
+import shutil
 import tempfile
-import subprocess
 import logging
-from fastapi.responses import FileResponse
-from fastapi import HTTPException
+
 import yt_dlp
 
-# Calcula la ruta absoluta hacia la raíz del proyecto donde está cookies.txt
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-COOKIES_PATH = os.path.join(BASE_DIR, "cookies.txt")
-
-# 1. Detección automática del entorno (Railway = Linux, Local = Windows)
-if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_STATIC_URL"):
-    FFMPEG_LOCATION = "ffmpeg"
-else:
-    FFMPEG_LOCATION = "ffmpeg.exe" # En local asume que está en la raíz junto a main.py
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("video_downloader")
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
 
 from .schemas import VideoDownloadRequest, VideoRequest
 
-def get_video_info_service(request: VideoRequest):
-    """Obtiene información y formatos del video"""
-    url = str(request.url)
-    ydl_opts = {
-        "quiet": True, 
-        "no_warnings": True,
-        "cookiefile": COOKIES_PATH,
-        "extractor_args": {"youtube": {"player_client": ["android"]}},
-        "ignore_no_formats_error": True  
+
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger("video_downloader")
+
+
+# Directorio raíz del proyecto
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
+
+COOKIES_PATH = os.path.join(BASE_DIR, "cookies.txt")
+
+FFMPEG_LOCATION = shutil.which("ffmpeg")
+
+
+def get_base_options():
+
+    options = {
+        "quiet": False,
+        "no_warnings": False,
+
+        # Solucionador JavaScript
+        "js_runtimes": {
+            "deno": {}
+        },
+
+        # Componentes EJS
+        "remote_components": ["ejs:github"],
+
+        # No descargar listas completas
+        "noplaylist": True,
+
+        # Evitar formatos incompletos
+        "ignoreerrors": False,
     }
-    
-    if FFMPEG_LOCATION != "ffmpeg":
-        ydl_opts["ffmpeg_location"] = FFMPEG_LOCATION
+
+    # Cookies opcionales
+    if os.path.exists(COOKIES_PATH):
+        options["cookiefile"] = COOKIES_PATH
+        logger.info("Archivo cookies.txt encontrado")
+
+    # FFmpeg
+    if FFMPEG_LOCATION:
+        options["ffmpeg_location"] = FFMPEG_LOCATION
+    else:
+        logger.warning("FFmpeg no fue encontrado")
+
+    return options
+
+
+def get_video_info_service(request: VideoRequest):
+
+    url = str(request.url)
+
+    ydl_opts = get_base_options()
+
+    ydl_opts.update({
+        "skip_download": True,
+    })
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return info
-    except Exception as e:
-        logger.error(f"Error al obtener info del video: {e}")
-        raise HTTPException(status_code=400, detail=f"Error al obtener la información: {str(e)}")
 
+            info = ydl.extract_info(
+                url,
+                download=False
+            )
+
+            return info
+
+    except Exception as e:
+
+        logger.exception("Error obteniendo información del video")
+
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error obteniendo información: {str(e)}"
+        )
 
 
 def download_video_service(request: VideoDownloadRequest, background_tasks):
-    url_str = str(request.url)
-    
-    # Crea un archivo temporal seguro
-    fd, temp_path = tempfile.mkstemp(suffix=".mp4")
-    os.close(fd) 
-    
-    # 2. Comando yt-dlp usando la variable dinámica de FFMPEG
-    command = [
-        sys.executable, "-m", "yt_dlp",
-        "--extractor-args", "youtube:player_client=web",
-        "--js-runtimes", "quickjs",
-        "--remote-components", "ejs:github",
-        "--no-playlist",
-        "--cookies", COOKIES_PATH,
-        "--ffmpeg-location", "/usr/bin/ffmpeg",
-        "-f", "bv*+ba/b",
-        "--merge-output-format", "mp4",
-        "-o", temp_path,
-        url_str
-    ]
+
+    url = str(request.url)
+
+    format_id = request.format_id.strip()
+
+    # Crear directorio temporal
+    temp_dir = tempfile.mkdtemp(prefix="video_")
+
+    output_template = os.path.join(
+        temp_dir,
+        "video.%(ext)s"
+    )
+
+    # Selector de formato
+    if format_id.lower() in ["bv", "best", "auto"]:
+
+        format_selector = "bv*+ba/b"
+
+    else:
+
+        # Combinar el formato seleccionado con el mejor audio disponible
+        format_selector = f"{format_id}+bestaudio/best"
+
+    ydl_opts = get_base_options()
+
+    ydl_opts.update({
+
+        "format": format_selector,
+
+        "outtmpl": output_template,
+
+        "merge_output_format": "mp4",
+
+        "postprocessors": [
+            {
+                "key": "FFmpegVideoRemuxer",
+                "preferedformat": "mp4",
+            }
+        ],
+
+    })
 
     try:
-        subprocess.run(command, check=True)
-        
-        # Validación crítica
-        if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
-            raise Exception("yt-dlp generó un archivo vacío (posible bloqueo de YouTube).")
-            
+
+        logger.info(f"Iniciando descarga: {url}")
+        logger.info(f"Formato solicitado: {format_selector}")
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+            ydl.download([url])
+
+        # Buscar archivo generado
+        video_path = os.path.join(temp_dir, "video.mp4")
+
+        if not os.path.exists(video_path):
+
+            archivos = os.listdir(temp_dir)
+
+            logger.info(f"Archivos generados: {archivos}")
+
+            raise Exception(
+                "No se encontró el archivo MP4 después de la descarga."
+            )
+
+        if os.path.getsize(video_path) == 0:
+
+            raise Exception("El archivo generado está vacío.")
+
+        logger.info(
+            f"Descarga exitosa: {os.path.getsize(video_path)} bytes"
+        )
+
     except Exception as e:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-        logger.error(f"Error descargando video: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error al procesar el video: {str(e)}")
 
-    print(f"Éxito: Archivo temporal de video generado en: {temp_path}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
-    # Limpieza segura
-    def cleanup_file(path: str):
-        try:
-            if os.path.exists(path):
-                os.remove(path)
-                print(f"Limpieza: Archivo temporal {path} eliminado.")
-        except Exception as e:
-            logger.error(f"Error al intentar borrar el archivo temporal: {e}")
+        logger.exception("Error descargando video")
 
-    # Programar borrado automático tras enviar la respuesta
-    background_tasks.add_task(cleanup_file, temp_path)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al procesar el video: {str(e)}"
+        )
 
-    # FileResponse con cabeceras estrictas
+    # Eliminar archivos después de enviar la respuesta
+    def cleanup():
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    background_tasks.add_task(cleanup)
+
     return FileResponse(
-        path=temp_path,
+        path=video_path,
         media_type="video/mp4",
         filename="video_descargado.mp4",
-        headers={"Content-Disposition": 'attachment; filename="video_descargado.mp4"'}
+        background=background_tasks
     )
