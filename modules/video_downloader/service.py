@@ -13,7 +13,7 @@ import yt_dlp
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from fastapi.background import BackgroundTask
+from starlette.background import BackgroundTask
 from pydantic import BaseModel
 
 
@@ -649,7 +649,11 @@ def download_video(request: VideoDownloadRequest):
 
     return FileResponse(
         path=video_path,
+        filename="video.mp4",
         media_type="video/mp4",
-        filename=filename,
-        background=cleanup_task
+        background=BackgroundTask(
+            shutil.rmtree,
+            temp_dir,
+            ignore_errors=True
+        )
     )
