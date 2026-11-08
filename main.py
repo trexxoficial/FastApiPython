@@ -34,7 +34,11 @@ from modules.video_downloader.router import router as video_downloader_router
 app = FastAPI()
 
 # REGISTRO DE RUTAS
-app.include_router(video_downloader_router)
+app.include_router(
+    video_downloader_router,
+    prefix="/api/video",
+    tags=["Video Downloader"]
+)
 
 origins = [
     "http://localhost:4200",    # Puerto por defecto de Angular
